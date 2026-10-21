@@ -1,0 +1,103 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=unappropriated-tatyana-nonpedagogically.ngrok-free.dev
+      - N8N_PROTOCOL=https
+      - N8N_PORT=5678
+      - N8N_WEBHOOK_URL=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/
+      - N8N_EDITOR_BASE_URL=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      # --- task runner (external mode) ---
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
+      - N8N_RUNNERS_AUTH_TOKEN=supersecrettoken123
+      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+
+  python-runner:
+    image: n8nio/runners:latest
+    restart: unless-stopped
+    environment:
+      - N8N_RUNNERS_TASK_BROKER_URI=http://n8n:5679
+      - N8N_RUNNERS_AUTH_TOKEN=supersecrettoken123
+      - N8N_RUNNERS_TYPE=python
+      - GENERIC_TIMEZONE=UTC
+    depends_on:
+      - n8n
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    environment:
+      - NGROK_AUTHTOKEN=33jLAzMZBDA3nDzyzneRNzgJX5u_4Mdf1YhkLm8FQzcPqYdLC
+    command:
+      - "http"
+      - "--url=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev"
+      - "n8n:5678"
+    depends_on:
+      - n8n
+
+volumes:
+  n8n_data:
+
+
+
+#   version: "3.8"
+
+# services:
+#   n8n:
+#     image: n8nio/n8n
+#     restart: unless-stopped
+#     ports:
+#       - "5678:5678"
+#     environment:
+#       - N8N_HOST=unappropriated-tatyana-nonpedagogically.ngrok-free.dev
+#       - N8N_PROTOCOL=https
+#       - N8N_PORT=5678
+#       - N8N_WEBHOOK_URL=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/
+#       - N8N_EDITOR_BASE_URL=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/
+#       - N8N_COMMUNITY_PACKAGES_ENABLED=true
+#       - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+#       - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+#       # --- task runner (external mode) ---
+#       - N8N_RUNNERS_ENABLED=true
+#       - N8N_RUNNERS_MODE=external
+#       - N8N_RUNNERS_AUTH_TOKEN=supersecrettoken123
+#       - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
+#     volumes:
+#       - ./n8n_data:/home/node/.n8n
+
+#   python-runner:
+#     image: n8nio/runners:latest
+#     restart: unless-stopped
+#     environment:
+#       - N8N_RUNNERS_TASK_BROKER_URI=http://n8n:5679
+#       - N8N_RUNNERS_AUTH_TOKEN=supersecrettoken123
+#       - N8N_RUNNERS_TYPE=python
+#       - GENERIC_TIMEZONE=UTC
+#     depends_on:
+#       - n8n
+
+#   ngrok:
+#     image: ngrok/ngrok:latest
+#     restart: unless-stopped
+#     environment:
+#       - NGROK_AUTHTOKEN=33jLAzMZBDA3nDzyzneRNzgJX5u_4Mdf1YhkLm8FQzcPqYdLC
+#     command:
+#       - "http"
+#       - "--url=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev"
+#       - "n8n:5678"
+#     depends_on:
+#       - n8n
+
+# volumes:
+#   n8n_data:

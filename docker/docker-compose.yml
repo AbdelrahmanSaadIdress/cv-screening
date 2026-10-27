@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   n8n:
     image: n8nio/n8n
@@ -36,11 +34,15 @@ services:
 
   ngrok:
     image: ngrok/ngrok:latest
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     restart: unless-stopped
     environment:
       - NGROK_AUTHTOKEN=33jLAzMZBDA3nDzyzneRNzgJX5u_4Mdf1YhkLm8FQzcPqYdLC
     command:
       - "http"
+      - "--log=stdout"
       - "--url=https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev"
       - "n8n:5678"
     depends_on:

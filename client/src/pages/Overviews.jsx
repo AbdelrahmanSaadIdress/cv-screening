@@ -14,16 +14,27 @@ function Figures({ items, loading }) {
   )
 }
 
-function EmptyState({ title, text, action, note }) {
+// Address of the job-description form (the n8n "job-new" page).
+// Set VITE_JOB_FORM_URL in client/.env. Only http(s) addresses are accepted.
+const rawJobFormUrl = import.meta.env.VITE_JOB_FORM_URL || ''
+const JOB_FORM_URL = /^https?:\/\//.test(rawJobFormUrl) ? rawJobFormUrl : ''
+
+function EmptyState({ title, text, action, href, note }) {
   return (
     <section className="empty">
       <h2 className="empty__title">{title}</h2>
       <p className="empty__text">{text}</p>
       <div className="empty__actions">
-        <button type="button" className="btn btn--primary btn--inline" disabled>
-          {action}
-        </button>
-        <span className="empty__note">{note}</span>
+        {href ? (
+          <a className="btn btn--primary btn--inline" href={href}>
+            {action}
+          </a>
+        ) : (
+          <button type="button" className="btn btn--primary btn--inline" disabled>
+            {action}
+          </button>
+        )}
+        {note && <span className="empty__note">{note}</span>}
       </div>
     </section>
   )
@@ -60,10 +71,11 @@ export function RecruiterHome() {
         ]}
       />
       <EmptyState
-        title="Upload your first batch of CVs"
-        text="Add a folder of PDF or Word files. Each CV is read for skills, experience and education, so you can search and rank all of them at once."
-        action="Upload CVs"
-        note="Uploads are not enabled yet."
+        title="Create your first job"
+        text="Paste a job description and Shortlist picks out the skills and weights candidates will be ranked on. You review everything before it goes live."
+        action="Create a job"
+        href={JOB_FORM_URL}
+        note={JOB_FORM_URL ? 'Opens the job form.' : 'The job form address is not set yet.'}
       />
     </div>
   )

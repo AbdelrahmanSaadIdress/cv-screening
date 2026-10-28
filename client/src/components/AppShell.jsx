@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { NAV, ROLE_LABEL } from '../config'
+// import { NAV, ROLE_LABEL } from '../config'
+import { navFor, ROLE_LABEL } from '../config'
 import BrandMark from './BrandMark'
 
 export default function AppShell() {
@@ -18,7 +19,7 @@ export default function AppShell() {
         <div className="shell__inner">
           <BrandMark tone="dark" />
           <nav className="shell__nav" aria-label="Main">
-            {NAV[user.role].map((item) => (
+            {navFor(user).map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end} className="shell__link">
                 {item.label}
               </NavLink>

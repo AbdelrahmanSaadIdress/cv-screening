@@ -55,6 +55,13 @@ export function RecruiterHome() {
   const { data, error, loading } = useOverview('/recruiter/overview')
   const first = user.fullName.split(' ')[0]
 
+  let jobHref = ''
+  if (JOB_FORM_URL) {
+    const link = new URL(JOB_FORM_URL)
+    link.searchParams.set('recruiter', user.slug)
+    jobHref = link.toString()
+  }
+
   return (
     <div className="page">
       <Head
@@ -74,8 +81,8 @@ export function RecruiterHome() {
         title="Create your first job"
         text="Paste a job description and Shortlist picks out the skills and weights candidates will be ranked on. You review everything before it goes live."
         action="Create a job"
-        href={JOB_FORM_URL}
-        note={JOB_FORM_URL ? 'Opens the job form.' : 'The job form address is not set yet.'}
+        href={jobHref}
+        note={jobHref ? 'Opens the job form.' : 'The job form address is not set yet.'}
       />
     </div>
   )

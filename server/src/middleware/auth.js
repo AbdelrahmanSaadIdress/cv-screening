@@ -2,9 +2,8 @@ const db = require('../db');
 const { verifyAccessToken, ACCESS_COOKIE } = require('../utils/tokens');
 
 const findUser = db.prepare(
-  'SELECT id, email, full_name, role, company FROM users WHERE id = ?'
+  'SELECT id, email, full_name, role, company, slug FROM users WHERE id = ?'
 );
-
 /** Requires a valid access cookie and loads the user fresh from the database. */
 function requireAuth(req, res, next) {
   const token = req.cookies?.[ACCESS_COOKIE];

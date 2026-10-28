@@ -1,6 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useParams } from 'react-router-dom'
 import { useAuth } from './AuthContext'
-import { ROLE_HOME } from '../config'
+import { homePath } from '../config'
 
 function Splash() {
   return (
@@ -15,22 +15,32 @@ function Splash() {
 export function PublicOnly() {
   const { user, ready } = useAuth()
   if (!ready) return <Splash />
-  if (user) return <Navigate to={ROLE_HOME[user.role]} replace />
+  if (user) return <Navigate to={homePath(user)} replace />
   return <Outlet />
 }
 
-/** Only the given role gets through. Anyone else goes to login or to their own area. */
+/** The address must contain this user's own name. Anyone else is sent home. */
+export function RequireOwner() {
+  const { user, ready } = useAuth()
+  const { slug } = useParams()
+  if (!ready) return <Splash />
+  if (!user) return <Navigate to="/login" replace />
+  if (user.slug !== slug) return <Navigate to={homePath(user)} replace />
+  return <Outlet />
+}
+
+/** Only the given role gets through. */
 export function RequireRole({ role }) {
   const { user, ready } = useAuth()
   if (!ready) return <Splash />
   if (!user) return <Navigate to="/login" replace />
-  if (user.role !== role) return <Navigate to={ROLE_HOME[user.role]} replace />
+  if (user.role !== role) return <Navigate to={homePath(user)} replace />
   return <Outlet />
 }
 
-/** The root address sends everyone to the right place. */
+/** The root address sends everyone to their own page. */
 export function RoleRedirect() {
   const { user, ready } = useAuth()
   if (!ready) return <Splash />
-  return <Navigate to={user ? ROLE_HOME[user.role] : '/login'} replace />
+  return <Navigate to={user ? homePath(user) : '/login'} replace />
 }

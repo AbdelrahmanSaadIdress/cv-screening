@@ -21,6 +21,8 @@ const {
   REFRESH_COOKIE,
 } = require('../utils/tokens');
 
+const { uniqueSlug } = require('../utils/slug');
+const slugTaken = db.prepare('SELECT 1 FROM users WHERE slug = ?');
 const router = express.Router();
 const now = () => Math.floor(Date.now() / 1000);
 
@@ -73,6 +75,7 @@ const publicUser = (u) => ({
   fullName: u.full_name,
   role: u.role,
   company: u.company,
+  slug: u.slug,
 });
 
 /* ------------------------------ sessions ------------------------------ */
@@ -137,12 +140,22 @@ router.post('/register', registerLimiter, async (req, res) => {
   const passwordHash = await hashPassword(password);
   let user;
   try {
+        const slug = uniqueSlug(fullName, (s) => slugTaken.get(s));
     const info = db
       .prepare(
-        `INSERT INTO users (email, password_hash, full_name, role, company, created_at, last_login_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO users (email, password_hash, full_name, role, company, slug, created_at, last_login_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(addr, passwordHash, fullName, role, role === 'recruiter' ? company : null, now(), now());
+      .run(
+        addr,
+        passwordHash,
+        fullName,
+        role,
+        role === 'recruiter' ? company : null,
+        slug,
+        now(),
+        now()
+      );
     user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -173,8 +186,9 @@ router.post('/login', loginLimiter, async (req, res) => {
       retryAfterSeconds: left,
     });
   }
-
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(addr);
+  const user = db
+    .prepare('SELECT id, email, full_name, role, company, slug FROM users WHERE id = ?')
+    .get(row.user_id);
   const ok = await verifyPassword(password, user ? user.password_hash : DUMMY_HASH);
 
   if (!user || !ok) {

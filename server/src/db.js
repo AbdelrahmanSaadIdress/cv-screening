@@ -47,3 +47,18 @@ db.exec(`
 `);
 
 module.exports = db;
+const { uniqueSlug } = require('./utils/slug');
+
+// Add the slug column to databases created before this change.
+const columns = db.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+if (!columns.includes('slug')) {
+  db.exec('ALTER TABLE users ADD COLUMN slug TEXT');
+}
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_slug ON users(slug)');
+
+// Give a slug to existing users.
+const slugTaken = db.prepare('SELECT 1 FROM users WHERE slug = ?');
+const setSlug = db.prepare('UPDATE users SET slug = ? WHERE id = ?');
+for (const u of db.prepare('SELECT id, full_name FROM users WHERE slug IS NULL').all()) {
+  setSlug.run(uniqueSlug(u.full_name, (s) => slugTaken.get(s)), u.id);
+}

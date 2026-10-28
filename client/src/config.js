@@ -1,26 +1,30 @@
-// Change the product name here and it updates everywhere in the interface.
 export const BRAND = 'Shortlist'
-
-export const ROLE_HOME = {
-  recruiter: '/recruiter',
-  applicant: '/applicant',
-}
 
 export const ROLE_LABEL = {
   recruiter: 'Recruiter',
   applicant: 'Applicant',
 }
 
-// What each role sees in the top navigation.
-export const NAV = {
+// Each person's home address, for example /u/omar-khaled/recruiter
+export function homePath(user) {
+  return `/u/${user.slug}/${user.role}`
+}
+
+const NAV = {
   recruiter: [
-    { to: '/recruiter', label: 'Overview', end: true },
-    { to: '/recruiter/candidates', label: 'Candidates' },
-    { to: '/recruiter/roles', label: 'Roles' },
+    { path: '', label: 'Overview', end: true },
+    { path: '/candidates', label: 'Candidates' },
+    { path: '/roles', label: 'Roles' },
   ],
   applicant: [
-    { to: '/applicant', label: 'Overview', end: true },
-    { to: '/applicant/jobs', label: 'Open roles' },
-    { to: '/applicant/applications', label: 'My applications' },
+    { path: '', label: 'Overview', end: true },
+    { path: '/jobs', label: 'Open roles' },
+    { path: '/applications', label: 'My applications' },
   ],
+}
+
+// Navigation links for this user, with full addresses that include their name.
+export function navFor(user) {
+  const base = homePath(user)
+  return NAV[user.role].map((item) => ({ ...item, to: base + item.path }))
 }

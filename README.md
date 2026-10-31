@@ -4,7 +4,9 @@ Shortlist is a recruitment system that takes a job from a pasted job description
 
 The system has a React frontend, a Node.js layer, and n8n as the workflow engine. Google Sheets stores the data, Google Drive stores the CVs, and Gmail and Google Calendar handle email and interviews.
 
-> **Demo video:** [Watch the walkthrough](#) *(replace `#` with the video link)*
+### Demo video
+
+[![Watch the Shortlist demo](docs/screenshots/thumbnail.png)](https://your-video-link-here)
 
 ---
 
@@ -338,7 +340,7 @@ Sends an applicant a link to choose an interview time.
 - **Steps:** check the link and token, request the calendar's busy periods, and show the free 30-minute slots. Slots run from Sunday to Thursday, with start times from 10:00 to 15:30, Cairo time, for the next eight days.
 - **Output:** the slots grouped by day. After a booking, the page shows the confirmed time and meeting link.
 
-![Available slots](docs/screenshots/11-schedule-page.png)
+<!-- ![Available slots](docs/screenshots/11-schedule-page.png) -->
 
 #### 12. Schedule Booking (`12-schedule-booking`)
 

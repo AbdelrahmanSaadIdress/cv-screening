@@ -1,0 +1,202 @@
+{
+  "name": "Job Detail Page",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "job",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f1e6d675-024c-46d0-b340-4a551890a883",
+      "name": "Job Page",
+      "webhookId": "b19cfcbb-d1c2-4ef9-ab5d-006de385f367"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.query.jobId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "f67a8e85-b4b5-437b-b69d-0827284fd84c",
+      "name": "Get Job Row",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.jobId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        0
+      ],
+      "id": "0b2ac5f3-6cad-436e-b591-b2ce05e90cb1",
+      "name": "Get Job Applicants",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const SHELL_CSS = `\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --danger:#b3261e; --danger-bg:#fdecea;\n    --ok:#075e4b; --ok-bg:#d4f0e6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}\n  button{font:inherit;color:inherit}\n  a{color:var(--ink)}\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n  main{padding:48px 40px 80px}\n  .crumb{font-size:14px;margin:0 0 12px}\n  .crumb a{color:var(--steel);text-decoration:none}\n  h1{margin:0 0 8px;font-family:var(--display);font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-.03em}\n  h2{margin:0;font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-.02em}\n  .lede{margin:0 0 32px;font-size:17px;color:var(--steel)}\n  .lede strong{color:var(--ink)}\n  .figures{display:flex;flex-wrap:wrap;margin:0 0 40px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}\n  .figures div{flex:1 1 140px;padding:18px 0 18px 22px;border-left:1px solid var(--line)}\n  .figures div:first-child{padding-left:0;border-left:0}\n  .figures dt{font-size:13px;color:var(--steel)}\n  .figures dd{margin:2px 0 0;font-family:var(--display);font-size:30px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}\n  .panel{background:#fff;border:1px solid var(--line);border-top:4px solid var(--c, var(--hl));border-radius:12px;padding:26px 28px 24px;margin-bottom:24px}\n  .panel__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;flex-wrap:wrap}\n  .panel__title{display:flex;align-items:center;gap:12px}\n  .panel__right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}\n  .dot{width:10px;height:10px;border-radius:50%;background:var(--c, var(--hl));flex:none}\n  .count{font-size:14px;color:var(--steel)}\n  .count b{color:var(--ink)}\n  .hint{font-size:14px;color:var(--steel);margin:0 0 16px}\n  .tablewrap{overflow-x:auto}\n  table{width:100%;border-collapse:collapse;font-size:14px}\n  th{padding:10px 12px;background:var(--fog);color:var(--steel);font-weight:600;text-align:left;white-space:nowrap}\n  th:first-child{border-radius:8px 0 0 8px} th:last-child{border-radius:0 8px 8px 0}\n  td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top}\n  tr:last-child td{border-bottom:0}\n  tbody tr:hover td{background:#fafbfd}\n  .name{font-weight:700;font-size:15px}\n  .muted{font-size:13px;color:var(--steel)}\n  .score{font-family:var(--display);font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}\n  .summary{max-width:320px;font-size:13px;color:var(--steel);line-height:1.5}\n  .link{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:6px;background:var(--fog);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}\n  .link:hover{background:#e8ecf3}\n  .tag{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--fog);color:var(--steel);font-size:12px;font-weight:600;white-space:nowrap}\n  .actions{display:flex;gap:6px;flex-wrap:wrap}\n  .btn{height:36px;padding:0 14px;border:0;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;background:var(--ok);color:#fff;white-space:nowrap}\n  .btn:hover:not(:disabled){background:#05503f}\n  .btn:disabled{opacity:.55;cursor:wait}\n  .btn-alt{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}\n  .btn-alt:hover:not(:disabled){background:var(--ink);color:#fff}\n  .empty{padding:24px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--steel);font-size:15px}\n  @media (max-width:860px){h1{font-size:32px}.figures div{padding-left:16px}}\n  @media (max-width:560px){main{padding:32px 16px 56px}.bar__in{padding:0 16px}.panel{padding:20px 16px 18px}}\n`;\n\nconst shell = (title, body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>${title} - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>${SHELL_CSS}</style></head><body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n</div></header>\n<main>${body}</main>\n</body></html>`;\n\nconst params = $('Job Page').first().json.query || {};\nconst job = $('Get Job Row').first().json || {};\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nif (!job.jobId || String(job.jobId).trim() !== String(params.jobId || \"\").trim()) {\n  return [{ json: { html: shell(\"Job not found\", '<div class=\"panel\" style=\"max-width:640px;margin:0 auto;text-align:center;border-top-color:var(--danger)\"><h1 style=\"font-size:28px\">Job not found</h1><p class=\"lede\" style=\"margin:0\">This job does not exist or the link is not valid.</p></div>') } }];\n}\n\n// Both spellings are accepted, so the page works with the names in the sheet\nconst MANUAL = [\"Needs Manual Review\", \"Manual Review\"];\nconst PENDING = [\"Pending Review\", \"Interview Scheduled\"];\n\nconst jobId = String(job.jobId).trim();\nconst apps = $('Get Job Applicants').all().map(i => i.json).filter(a => a && a.applicationId);\nconst st = (name) => apps.filter(a => String(a.status).trim() === name).length;\nconst stInList = (names) => apps.filter(a => names.includes(String(a.status).trim())).length;\n\nconst SECTIONS = [\n  { statuses: PENDING, title: \"Pending review\", color: \"#075e4b\", cols: \"review\",\n    hint: \"Passed automatic screening, or interview scheduled. Review the summary and accept the best fits.\" },\n  { statuses: MANUAL, title: \"Manual review\", color: \"#8a5a00\", cols: \"review\",\n    hint: \"Borderline cases. Read the CV, then move to Pending review when you are ready to consider the applicant.\" },\n  { statuses: [\"Accepted\", \"Offer Sent\"], title: \"Accepted\", color: \"#166534\", cols: \"basic\",\n    hint: \"Candidates who passed the interview and were accepted.\" },\n  { statuses: [\"Auto-Rejected\"], title: \"Auto-rejected\", color: \"#b3261e\", cols: \"basic\",\n    hint: \"Rejected by automatic screening. Kept for reference.\" }\n];\nconst listed = SECTIONS.flatMap(s => s.statuses);\n\nconst stat = (label, value, color) =>\n  '<div><dt>' + label + '</dt><dd style=\"color:' + color + '\">' + value + '</dd></div>';\n\nconst statsHtml = '<dl class=\"figures\">' +\n  stat(\"Total applicants\", apps.length, \"#12213b\") +\n  stat(\"Pending review\", stInList(PENDING), \"#075e4b\") +\n  stat(\"Manual review\", stInList(MANUAL), \"#8a5a00\") +\n  stat(\"Accepted\", stInList([\"Accepted\", \"Offer Sent\"]), \"#166534\") +\n  stat(\"Auto-rejected\", st(\"Auto-Rejected\"), \"#b3261e\") +\n  '</dl>';\n\nconst sorted = apps.slice().sort((a, b) => (Number(b.finalScore) || 0) - (Number(a.finalScore) || 0));\n\nconst nameCell = (a) => '<div class=\"name\">' + esc(a.applicantName) + '</div><div class=\"muted\">' + esc(a.applicantEmail) + '</div>';\nconst scoreCell = (a) => '<span class=\"score\">' + esc(a.finalScore || \"—\") + '</span>';\nconst cvCell = (a) => a.cvLink\n  ? '<a class=\"link\" href=\"' + esc(a.cvLink) + '\" target=\"_blank\" rel=\"noopener\">Open CV</a>'\n  : '<span class=\"muted\">—</span>';\n\nconst row = (a, cols) => {\n  const s = String(a.status).trim();\n  const cells = [\n    '<td>' + nameCell(a) + '</td>',\n    '<td>' + esc(String(a.applicantPhone || \"\")) + '</td>',\n    '<td>' + esc(a.appliedPosition) + '</td>',\n    '<td>' + scoreCell(a) + '</td>'\n  ];\n  if (cols === \"review\") {\n    cells.push('<td>' + (a.interviewDate ? esc(a.interviewDate) : '<span class=\"tag\">Awaiting booking</span>') + '</td>');\n    cells.push('<td>' + (a.meetingLink\n      ? '<a class=\"link\" href=\"' + esc(a.meetingLink) + '\" target=\"_blank\" rel=\"noopener\">Join meeting</a>'\n      : '<span class=\"muted\">—</span>') + '</td>');\n    cells.push('<td><div class=\"summary\">' + esc(a.fitSummary || \"—\") + '</div></td>');\n  }\n  cells.push('<td>' + cvCell(a) + '</td>');\n  if (cols === \"review\") {\n    const buttons = [];\n    if (PENDING.includes(s)) {\n      buttons.push('<button class=\"btn\" data-accept=\"' + esc(a.applicationId) + '\">Accept</button>');\n    }\n    if (MANUAL.includes(s)) {\n      // data-job carries the job ID to the click handler\n      buttons.push('<button class=\"btn btn-alt\" data-pending=\"' + esc(a.applicationId) + '\" data-job=\"' + esc(jobId) + '\">Move to pending</button>');\n    }\n    cells.push('<td><div class=\"actions\">' + buttons.join('') + '</div></td>');\n  }\n  return '<tr>' + cells.join('') + '</tr>';\n};\n\nconst headers = (cols) => cols === \"review\"\n  ? ['Name', 'Phone', 'Applied role', 'Score', 'Interview date', 'Interview link', 'Summary', 'CV', 'Actions']\n  : ['Name', 'Phone', 'Applied role', 'Score', 'CV'];\n\nconst panel = (sec, list) => {\n  const cols = headers(sec.cols);\n  const head = cols.map(h => '<th>' + h + '</th>').join('');\n  const rows = list.length\n    ? list.map(a => row(a, sec.cols)).join('')\n    : '<tr><td colspan=\"' + cols.length + '\" class=\"muted\">No applicants in this section.</td></tr>';\n  return '<section class=\"panel\" style=\"--c:' + sec.color + '\">' +\n    '<div class=\"panel__head\"><div class=\"panel__title\"><span class=\"dot\"></span><h2>' + esc(sec.title) + '</h2></div>' +\n    '<div class=\"panel__right\"><span class=\"count\"><b>' + list.length + '</b> ' + (list.length === 1 ? 'applicant' : 'applicants') + '</span></div></div>' +\n    '<p class=\"hint\">' + esc(sec.hint) + '</p>' +\n    '<div class=\"tablewrap\"><table><thead><tr>' + head + '</tr></thead>' +\n    '<tbody>' + rows + '</tbody></table></div>' +\n    '</section>';\n};\n\nconst mainPanels = SECTIONS\n  .map(sec => {\n    const list = sorted.filter(a => sec.statuses.includes(String(a.status).trim()));\n    return (list.length || sec.statuses === MANUAL) ? panel(sec, list) : '';\n  })\n  .join('');\n\nconst other = sorted.filter(a => !listed.includes(String(a.status).trim()));\nconst otherPanel = other.length\n  ? panel({ title: \"Other\", color: \"#56657e\", cols: \"basic\", hint: \"Applicants with a status not listed above.\" }, other)\n  : '';\n\nconst body = '<p class=\"crumb\"><a href=\"javascript:history.back()\">← Back to my jobs</a></p>' +\n  '<h1>' + esc(job.role) + '</h1>' +\n  '<p class=\"lede\">Job ID <strong>' + esc(job.jobId) + '</strong> · Status <strong>' + esc(job.status) + '</strong></p>' +\n  statsHtml +\n  (mainPanels + otherPanel || '<div class=\"empty\">No applicants yet.</div>') +\n  '<script>' +\n  'var base = location.pathname.replace(/\\\\/job\\\\/?$/, \"\");' +\n  'var JOB = new URLSearchParams(location.search).get(\"jobId\") || \"\";' +\n  'async function post(path, payload){' +\n  '  var r = await fetch(base + path, {method: \"POST\", headers: {\"Content-Type\": \"application/json\"}, body: JSON.stringify(payload)});' +\n  '  return r.json();' +\n  '}' +\n  'document.addEventListener(\"click\", async function(e){' +\n  '  var t = e.target;' +\n  '  var id = t.getAttribute(\"data-accept\");' +\n  '  var one = t.getAttribute(\"data-pending\");' +\n  '  var job = t.getAttribute(\"data-job\");' +\n  '  var jid = JOB;' +\n  '  if (!id && !one) return;' +\n  '  if (id && !confirm(\"Accept this applicant? They will receive a congratulations email.\")) return;' +\n  '  t.disabled = true;' +\n  '  console.log(t);' +\n  '  try {' +\n  '    var d;' +\n  '    if (id) d = await post(\"/accept-applicant\", {applicationId: id});' +\n  '    else d = await post(\"/applicant-to-pending\", {applicationId: one, jobId: jid});' +\n  '    console.log(d);' +\n  '    if (d.ok) { if (id) alert(\"Accepted. The congratulations email is on its way.\"); location.reload(); }' +\n  '    else { alert((d.errors || [\"Something went wrong.\"]).join(\"\\\\n\")); t.disabled = false; }' +\n  '  } catch (err) { alert(\"Could not reach the server. Please try again.\"); t.disabled = false; }' +\n  '});' +\n  '</script>';\n\nreturn [{ json: { html: shell(\"Job applicants\", body) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "13dd363d-2c2f-4331-9f55-a0d320da5bcc",
+      "name": "Build Job Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        960,
+        0
+      ],
+      "id": "4ca00b8b-9119-4c33-a1b8-fd2e5b2de0ab",
+      "name": "Serve Job Page"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Job Page": {
+      "main": [
+        [
+          {
+            "node": "Get Job Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Row": {
+      "main": [
+        [
+          {
+            "node": "Get Job Applicants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Applicants": {
+      "main": [
+        [
+          {
+            "node": "Build Job Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Job Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Job Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a2649bd7-3f43-4771-b0c4-5e5dfa9d7561",
+  "meta": {
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "ii7CliroeYElKjCH",
+  "tags": []
+}

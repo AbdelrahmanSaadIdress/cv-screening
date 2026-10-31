@@ -1,0 +1,154 @@
+{
+  "name": "2. Recruiter Reviewing",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "job-review",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ab43a723-e041-484b-999f-bfa8002372c3",
+      "name": "Job Review Page",
+      "webhookId": "dca649e1-d963-4cf9-95e6-64bf98cb8e24"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.query.jobId }}"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b44434dc-41bd-403e-afaf-c17890455266",
+      "name": "Get Draft Job",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json || {};\nconst q = $('Job Review Page').first().json.query || {};\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst DASHBOARD_URL = 'http://localhost:5173/recruiter';\n\nconst shell = (body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Review job - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --danger:#b3261e; --danger-bg:#fdecea;\n    --ok:#075e4b; --ok-bg:#d4f0e6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body {\n  margin: 0;\n  padding: 24px 32px 48px;\n  background: var(--fog);\n  color: var(--ink);\n  font-family: var(--body);\n  font-size: 16px;\n  line-height: 1.5;\n  -webkit-font-smoothing: antialiased;\n}\n  input,select,textarea,button{font:inherit;color:inherit}\n  .wrap {\n  width: 100%;\n  max-width: none;\n  margin: 0;\n}\n  .brand{display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;font-family:var(--display);\n    font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n  .card {\n  width: 100%;\n  background: #fff;\n  border: 1px solid var(--line);\n  border-top: 4px solid var(--hl);\n  border-radius: 12px;\n  padding: 36px 40px 40px;\n}\n  .done{padding:8px 0 4px}\n  .okmark{width:44px;height:44px;margin-bottom:16px;border-radius:50%;background:var(--ok-bg);color:var(--ok);\n    display:flex;align-items:center;justify-content:center}\n  .okmark svg{width:22px;height:22px}\n  h1{margin:0 0 6px;font-family:var(--display);font-size:28px;font-weight:700;line-height:1.1;letter-spacing:-.025em}\n  h2{margin:32px 0 8px;font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.015em}\n  .sub{margin:0 0 16px;color:var(--steel)}\n  .note{margin:0 0 8px;padding:12px 14px;background:var(--fog);border-left:3px solid var(--hl);\n    border-radius:6px;font-size:15px}\n  .tablewrap{position:relative;overflow-x:auto;padding:0 0 4px}\n  table{width:100%;min-width:640px;border-collapse:collapse;font-size:14px}\n  th{padding:10px 8px;background:var(--fog);color:var(--steel);font-weight:600;text-align:left}\n  th:first-child{border-radius:8px 0 0 8px;padding-left:12px} th:last-child{border-radius:0 8px 8px 0}\n  td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}\n  input[type=text],input[type=number],select,textarea{width:100%;height:42px;padding:0 12px;border:1.5px solid var(--line);\n    border-radius:8px;background:#fff;font-size:15px;transition:border-color .15s,box-shadow .15s}\n  select{padding-right:8px}\n  textarea{height:auto;padding:12px 14px;resize:vertical;line-height:1.5}\n  input:hover,select:hover,textarea:hover{border-color:#b3bdcf}\n  input:focus-visible,select:focus-visible,textarea:focus-visible{border-color:var(--ink);outline:2px solid transparent;\n    box-shadow:0 0 0 3px var(--hl)}\n  label.f{display:block;margin:20px 0 6px;font-size:14px;font-weight:600}\n  .grid{display:grid;grid-template-columns:1fr 2fr;gap:16px}\n  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;\n    background:var(--hl-soft);color:var(--ink);white-space:nowrap}\n  .pill.jd{background:var(--ok-bg);color:var(--ok)}\n  button{cursor:pointer;border:0;border-radius:8px;font-weight:600;transition:background-color .15s}\n  button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  #go{margin-top:28px;width:100%;height:48px;background:var(--ink);color:#fff}\n  #go:hover:not(:disabled){background:var(--ink-soft)}\n  #go:disabled{opacity:.55;cursor:wait}\n  .ghost{height:40px;margin-top:12px;padding:0 16px;background:#fff;border:1.5px solid var(--line);color:var(--ink)}\n  .ghost:hover{background:var(--fog);border-color:#b3bdcf}\n  .x{width:36px;height:36px;padding:0;background:transparent;color:var(--steel);font-size:16px}\n  .x:hover{background:var(--danger-bg);color:var(--danger)}\n  .errors{margin-top:20px;padding:12px 14px;background:var(--danger-bg);border-left:3px solid var(--danger);\n    border-radius:6px;color:#7a1a14;font-size:15px}\n  .errors[hidden]{display:none}\n  .errors ul{margin:0;padding-left:20px}\n  a.btn{display:inline-flex;align-items:center;height:48px;padding:0 22px;background:var(--ink);color:#fff;\n    border-radius:8px;font-weight:600;text-decoration:none;transition:background-color .15s}\n  a.btn:hover{background:var(--ink-soft)}\n  a.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  @media (max-width:640px){.card{padding:24px 18px 28px}.grid{grid-template-columns:1fr}a.btn{width:100%;justify-content:center}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}}\n</style></head><body>\n<div class=\"wrap\">\n<div class=\"brand\">\n  <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n    <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n    <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n    <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n    <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n    <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n  </svg>\n  Shortlist\n</div>\n${body}\n</div></body></html>`;\n\nconst msg = (title, text) => [{ json: { html: shell(`<div class=\"card\"><h1>${esc(title)}</h1><p class=\"sub\" style=\"margin:0\">${esc(text)}</p></div>`) } }];\n\nif (!row.jobId || row.jobId !== q.jobId || !q.token || String(row.reviewToken) !== String(q.token)) {\n  return msg('This link is not valid', 'It may have expired or already been used.');\n}\nif (row.status !== 'Draft') {\n  return msg('Already processed', 'This job has already been approved.');\n}\n\nlet skills = [];\ntry { skills = JSON.parse(row.draftSkills || '[]'); } catch (e) {}\n\nconst data = {\n  jobId: row.jobId,\n  token: String(q.token),\n  skills,\n  minExperienceYears: Number(row.minExperienceYears) || 0,\n  education: row.education || ''\n};\nconst dataJson = JSON.stringify(data).replace(/</g, '\\\\u003c');\n\nconst tgBox = row.telegramPost\n  ? `<label class=\"f\" for=\"tg\">Telegram post</label><textarea id=\"tg\" rows=\"9\">${esc(row.telegramPost)}</textarea>` : '';\nconst liBox = row.linkedinPost\n  ? `<label class=\"f\" for=\"li\">LinkedIn post</label><textarea id=\"li\" rows=\"11\">${esc(row.linkedinPost)}</textarea>` : '';\n\nconst page = `\n<div class=\"card\" id=\"main\">\n  <h1>Review &amp; approve</h1>\n  <p class=\"sub\">${esc(row.role)} · Job ID <strong>${esc(row.jobId)}</strong></p>\n  <div class=\"note\" id=\"note\"></div>\n\n  <h2>Skills &amp; weights</h2>\n  <p class=\"sub\" style=\"margin-bottom:12px\">10 = essential, 1 = minor. Weights are private and never appear in the posts.</p>\n  <div class=\"tablewrap\">\n  <table>\n    <thead><tr><th>Skill</th><th>Weight (1-10)</th><th>Type</th><th>Source</th><th><span style=\"position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)\">Remove</span></th></tr></thead>\n    <tbody id=\"rows\"></tbody>\n  </table>\n  </div>\n  <button class=\"ghost\" id=\"add\">+ Add skill</button>\n\n  <h2>Requirements</h2>\n  <div class=\"grid\">\n    <div><label class=\"f\" style=\"margin-top:0\" for=\"years\">Minimum years</label><input type=\"number\" id=\"years\" min=\"0\" max=\"30\"></div>\n    <div><label class=\"f\" style=\"margin-top:0\" for=\"edu\">Education</label><input type=\"text\" id=\"edu\" maxlength=\"200\"></div>\n  </div>\n\n  <h2>Posts</h2>\n  ${tgBox}${liBox}\n\n  <div class=\"errors\" id=\"errors\" role=\"alert\" hidden></div>\n  <button id=\"go\">Approve &amp; publish</button>\n</div>\n\n<script>\nvar D = ${dataJson};\nvar DASHBOARD_URL = ${JSON.stringify(DASHBOARD_URL)};\nvar skills = D.skills.map(function(s){ return {skill: s.skill, weight: s.weight, type: s.type, source: s.source}; });\nvar api = location.pathname.replace('job-review', 'job-approve');\nfunction $(id){ return document.getElementById(id); }\nfunction esc(s){ return String(s).replace(/[&<>\"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]; }); }\n\n$('years').value = D.minExperienceYears;\n$('edu').value = D.education;\nvar anyJD = skills.some(function(s){ return s.source === 'jd'; });\n$('note').textContent = anyJD\n  ? 'Some weights were taken from your job description (green). The rest are AI suggestions (yellow). Adjust anything you like.'\n  : 'These weights are AI suggestions. Adjust anything you like.';\n\nfunction render(){\n  $('rows').innerHTML = skills.map(function(s, i){\n    var label = s.source === 'jd' ? 'from your JD' : (s.source === 'added' ? 'added by you' : 'AI suggestion');\n    return '<tr>' +\n      '<td><input type=\"text\" maxlength=\"60\" aria-label=\"Skill name\" value=\"' + esc(s.skill) + '\" data-i=\"' + i + '\" data-f=\"skill\"></td>' +\n      '<td style=\"width:110px\"><input type=\"number\" min=\"1\" max=\"10\" step=\"1\" aria-label=\"Weight\" value=\"' + esc(s.weight) + '\" data-i=\"' + i + '\" data-f=\"weight\"></td>' +\n      '<td style=\"width:150px\"><select aria-label=\"Type\" data-i=\"' + i + '\" data-f=\"type\"><option' + (s.type === 'Required' ? ' selected' : '') + '>Required</option><option' + (s.type !== 'Required' ? ' selected' : '') + '>Nice-to-have</option></select></td>' +\n      '<td><span class=\"pill ' + (s.source === 'jd' ? 'jd' : '') + '\">' + label + '</span></td>' +\n      '<td style=\"width:52px\"><button class=\"x\" aria-label=\"Remove skill\" data-del=\"' + i + '\">✕</button></td></tr>';\n  }).join('');\n}\nfunction sync(e){\n  var t = e.target, i = t.getAttribute('data-i'), f = t.getAttribute('data-f');\n  if (i !== null && f) skills[Number(i)][f] = t.value;\n}\n$('rows').addEventListener('input', sync);\n$('rows').addEventListener('change', sync);\n$('rows').addEventListener('click', function(e){\n  var d = e.target.getAttribute('data-del');\n  if (d !== null) { skills.splice(Number(d), 1); render(); }\n});\n$('add').addEventListener('click', function(){\n  skills.push({skill: '', weight: 5, type: 'Required', source: 'added'});\n  render();\n});\n\nfunction showErrors(list){\n  $('errors').innerHTML = '<ul>' + list.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';\n  $('errors').hidden = false;\n}\n\n$('go').addEventListener('click', async function(){\n  var btn = this;\n  $('errors').hidden = true;\n  var items = skills.map(function(s){\n    return {skill: String(s.skill || '').trim(), weight: Math.round(Number(s.weight)), type: s.type};\n  });\n  var payload = {\n    jobId: D.jobId, token: D.token, skills: items,\n    minExperienceYears: Number($('years').value) || 0,\n    education: $('edu').value,\n    telegramPost: $('tg') ? $('tg').value : '',\n    linkedinPost: $('li') ? $('li').value : ''\n  };\n  btn.disabled = true; btn.textContent = 'Saving';\n  \ntry {\n  console.log('Approval API URL:', api);\n\n  var res = await fetch(api, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify(payload)\n  });\n\n  var responseText = await res.text();\n\n  console.log('HTTP status:', res.status);\n  console.log('Response:', responseText);\n\n  var data;\n  try {\n    data = JSON.parse(responseText);\n  } catch (parseError) {\n    throw new Error(\n      'Server returned non-JSON response (HTTP ' +\n      res.status + '): ' + responseText.slice(0, 300)\n    );\n  }\n\n  if (!res.ok) {\n    throw new Error('HTTP ' + res.status + ': ' + responseText.slice(0, 300));\n  }\n\n  if (data.ok) {\n    $('main').innerHTML =\n      '<div class=\"done\">' +\n      '<h1>Job approved</h1>' +\n      '<p class=\"sub\">Job ID <strong>' +\n      esc(data.jobId) +\n      '</strong> is now open for applications.</p>' +\n      '<a class=\"btn\" href=\"' + esc(DASHBOARD_URL) +\n      '\">Back to dashboard</a></div>';\n    return;\n  }\n\n  showErrors(data.errors || ['Approval failed.']);\n\n} catch (e) {\n  console.error('Approval error:', e);\n  showErrors(['Approval failed: ' + e.message]);\n}\n\nbtn.disabled = false;\nbtn.textContent = 'Approve & publish';\n\n  \n});\n\nrender();\n</script>`;\n\nreturn [{ json: { html: shell(page) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "afad8b10-ab49-4ca2-8fe4-4f7c3332b413",
+      "name": "Build Review Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        704,
+        0
+      ],
+      "id": "87a0fe9c-1bbd-40bb-a1c1-77d78cbb67b2",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Job Review Page": {
+      "main": [
+        [
+          {
+            "node": "Get Draft Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Draft Job": {
+      "main": [
+        [
+          {
+            "node": "Build Review Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Page": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0238613b-fd96-45fc-9d28-4ad2fb57daca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "2SMugOcci1tVpBdy",
+  "tags": []
+}

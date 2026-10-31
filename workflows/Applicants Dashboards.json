@@ -1,0 +1,433 @@
+{
+  "name": "Applicants Dashboards",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "jobs",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e01d6118-d271-4d39-95e3-239e8025bf2c",
+      "name": "Jobs Page",
+      "webhookId": "f3cf50ac-8d86-4b48-88f4-8d430ae27d6a"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "ae5e2fbf-7307-48e4-ac42-737c110b8883",
+      "name": "Get Jobs",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const SHELL_CSS = `\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --ok:#075e4b; --ok-bg:#d4f0e6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}\n  button{font:inherit}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n  .count-pill{font-size:14px;color:var(--steel)}\n\n  main{padding:48px 40px 80px}\n  .eyebrow{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--steel)}\n  h1{margin:0 0 10px;font-family:var(--display);font-size:44px;font-weight:700;line-height:1.05;letter-spacing:-.03em}\n  .lede{margin:0 0 36px;max-width:44rem;font-size:17px;color:var(--steel)}\n\n  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}\n  .job{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-top:4px solid var(--hl);\n    border-radius:14px;padding:24px 26px 26px;transition:border-color .15s,box-shadow .15s}\n  .job:hover{border-color:#b3bdcf;box-shadow:0 10px 24px -14px rgba(18,33,59,.28)}\n  .job h2{margin:0 0 8px;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2}\n  .tags{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px;min-height:28px}\n  .tag{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--fog);color:var(--steel);font-size:13px;font-weight:600}\n  .tag--exp{background:var(--hl-soft);color:var(--ink)}\n  .job .btn{margin-top:auto;align-self:flex-start}\n\n  .btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border:0;border-radius:10px;\n    background:var(--ink);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background-color .15s}\n  .btn:hover{background:var(--ink-soft)}\n  .btn:focus-visible,.job:focus-within{outline:3px solid var(--ink);outline-offset:2px}\n\n  .empty{padding:48px 28px;border:1px dashed #b3bdcf;border-radius:14px;text-align:center;color:var(--steel);background:#fff;font-size:16px}\n  .empty h2{margin:0 0 6px;font-family:var(--display);font-size:22px;color:var(--ink)}\n\n  @media (max-width:560px){main{padding:32px 16px 56px}.bar__in{padding:0 16px}h1{font-size:34px}.job{padding:20px 20px 22px}.grid{grid-template-columns:1fr}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}}\n`;\n\nconst shell = (title, body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>${title} - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>${SHELL_CSS}</style></head><body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n</div></header>\n<main>${body}</main>\n</body></html>`;\n\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst jobs = $('Get Jobs').all().map(i => i.json)\n  .filter(j => j && j.jobId && String(j.status).trim() === \"Open\");\n\nconst cards = jobs.map(j => {\n  const exp = Number(j.minExperienceYears) > 0 ? '<span class=\"tag tag--exp\">' + esc(j.minExperienceYears) + '+ years experience</span>' : '';\n  const edu = j.education ? '<span class=\"tag\">' + esc(j.education) + '</span>' : '';\n  return '<article class=\"job\">' +\n    '<h2>' + esc(j.role) + '</h2>' +\n    '<div class=\"tags\">' + (exp + edu || '<span class=\"tag\">Details in the job post</span>') + '</div>' +\n    '<button class=\"btn\" data-job=\"' + esc(String(j.jobId).trim()) + '\">View job</button>' +\n    '</article>';\n}).join(\"\");\n\nconst body = '<p class=\"eyebrow\">Join our team</p>' +\n  '<h1>Open positions</h1>' +\n  '<p class=\"lede\">Browse the roles we are hiring for and find the one that fits you.</p>' +\n  (cards\n    ? '<div class=\"grid\">' + cards + '</div>'\n    : '<div class=\"empty\"><h2>No open positions right now</h2>Please check back soon.</div>') +\n  '<script>' +\n  'document.addEventListener(\"click\", function(e){' +\n  '  var id = e.target.getAttribute(\"data-job\");' +\n  '  if (!id) return;' +\n  '  var parts = location.pathname.split(\"/\"); parts.pop();' +\n  '  location.href = parts.join(\"/\") + \"/post?jobId=\" + encodeURIComponent(id);' +\n  '});' +\n  '</script>';\n\nreturn [{ json: { html: shell(\"Open positions\", body) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "39a4fc72-7f6c-4127-a3d7-6f0e1b65697b",
+      "name": "Build Jobs Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "95068b55-de68-4d57-8d1a-24d2215a973f",
+      "name": "Serve Jobs Page"
+    },
+    {
+      "parameters": {
+        "path": "post",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "76c9b36d-caad-454b-9e1c-386b02ae6096",
+      "name": "Post Page",
+      "webhookId": "d5dc1901-9690-4ff9-b4c6-b0ea00a0940c"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $('Post Page').first().json.query.jobId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        224
+      ],
+      "id": "efb45fc3-5556-4fe8-b44e-bc6eda2e1635",
+      "name": "Get Post Job",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const SHELL_CSS = `\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --ok:#075e4b; --ok-bg:#d4f0e6; --danger:#b3261e; --danger-bg:#fdecea;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}\n  a{color:var(--ink)}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n  .back{font-size:15px;font-weight:600;color:var(--steel);text-decoration:none;padding:8px 12px;border-radius:6px}\n  .back:hover{background:#f0f3f8;color:var(--ink)}\n  .back:focus-visible{outline:3px solid var(--ink);outline-offset:1px}\n\n  main{padding:48px 40px 80px}\n  .eyebrow{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--steel)}\n  h1{margin:0 0 14px;font-family:var(--display);font-size:44px;font-weight:700;line-height:1.08;letter-spacing:-.03em;max-width:24ch}\n  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 36px}\n  .chip{display:inline-block;padding:5px 13px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;color:var(--steel)}\n  .chip--hl{background:var(--hl-soft);border-color:var(--hl);color:var(--ink);font-weight:600}\n\n  .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}\n  .card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--hl);border-radius:14px;padding:34px 38px 36px}\n  .summary{margin:0 0 28px;font-size:18px;line-height:1.65;color:var(--ink)}\n  h2{margin:32px 0 12px;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.02em}\n  h2:first-of-type{margin-top:0}\n  ul.list{margin:0;padding:0;list-style:none}\n  ul.list li{position:relative;padding:8px 0 8px 28px;border-bottom:1px solid #eef1f6;color:var(--ink)}\n  ul.list li:last-child{border-bottom:0}\n  ul.list li::before{content:'';position:absolute;left:2px;top:17px;width:12px;height:12px;border-radius:50%;\n    background:var(--ink);box-shadow:inset 0 0 0 3px var(--hl)}\n\n  .side{position:sticky;top:24px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px 26px}\n  .side h2{margin:0 0 14px;font-size:18px}\n  .fact{padding:14px 0;border-bottom:1px solid #eef1f6}\n  .fact:last-of-type{border-bottom:0}\n  .fact dt{font-size:13px;color:var(--steel)}\n  .fact dd{margin:2px 0 0;font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-.01em}\n  .btn{display:flex;align-items:center;justify-content:center;width:100%;height:52px;margin-top:20px;border-radius:10px;background:var(--ink);color:#fff;\n    font-size:16px;font-weight:600;text-decoration:none;transition:background-color .15s}\n  .btn:hover{background:var(--ink-soft)}\n  .btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  .btn[aria-disabled=\"true\"]{opacity:.5;pointer-events:none}\n  .note{margin:12px 0 0;font-size:13px;color:var(--steel);text-align:center}\n\n  .unavailable{max-width:640px;margin:40px auto 0;background:#fff;border:1px solid var(--line);border-top:4px solid var(--danger);\n    border-radius:14px;padding:40px 36px;text-align:center}\n  .unavailable h1{font-size:32px;max-width:none}\n  .unavailable p{margin:0 0 22px;color:var(--steel)}\n  .btn--inline{display:inline-flex;width:auto;padding:0 22px;margin:0;height:46px;align-items:center}\n\n  @media (max-width:900px){.layout{grid-template-columns:1fr}.side{position:static;order:-1}h1{font-size:34px}}\n  @media (max-width:560px){main{padding:28px 16px 56px}.bar__in{padding:0 16px}.card{padding:24px 20px 26px}.side{padding:22px 20px}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}}\n`;\n\nconst shell = (title, body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>${title} - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>${SHELL_CSS}</style></head><body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n  <a class=\"back\" href=\"javascript:history.back()\">← All positions</a>\n</div></header>\n<main>${body}</main>\n</body></html>`;\n\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst params = $('Post Page').first().json.query || {};\nconst job = $('Get Post Job').first().json || {};\nconst wanted = String(params.jobId || \"\").trim().toUpperCase();\nconst isOpen = Boolean(job.jobId) && String(job.jobId).trim().toUpperCase() === wanted && String(job.status).trim() === \"Open\";\n\nif (!isOpen) {\n  return [{ json: { html: shell(\"Position unavailable\",\n    '<div class=\"unavailable\"><h1>This position is no longer available</h1><p>The job may have closed, or the link is not valid.</p><a class=\"btn btn--inline\" href=\"javascript:history.back()\">Back to open positions</a></div>') } }];\n}\n\nlet post = null;\ntry {\n  const p = JSON.parse(job.webPost || \"\");\n  if (p && typeof p === \"object\") post = p;\n} catch (e) { post = null; }\n\nconst list = (v, max) => Array.isArray(v) ? v.map(x => String(x || \"\").trim()).filter(Boolean).slice(0, max) : [];\n\nconst headline = (post && post.headline) ? String(post.headline) : String(job.role || \"\");\nconst summary = (post && post.summary) ? String(post.summary) : \"\";\nconst duties = post ? list(post.responsibilities, 6) : [];\nlet requirements = post ? list(post.requirements, 14) : [];\nif (!requirements.length) {\n  requirements = [Number(job.minExperienceYears) > 0 ? job.minExperienceYears + \"+ years of professional experience\" : \"\", job.education || \"\"].filter(Boolean);\n}\nconst nice = post ? list(post.nice_to_have, 8) : [];\nconst location = (post && post.location) ? String(post.location) : \"\";\n\nconst link = String(job.applyLink || \"\").trim();\nconst applyHref = /^https:\\/\\//.test(link) ? link : \"#\";\n\nconst chips = [\n  location ? '<span class=\"chip\">' + esc(location) + '</span>' : '',\n  Number(job.minExperienceYears) > 0 ? '<span class=\"chip chip--hl\">' + esc(job.minExperienceYears) + '+ years</span>' : '',\n  job.education ? '<span class=\"chip\">' + esc(job.education) + '</span>' : ''\n].filter(Boolean).join(\"\");\n\nconst ul = (items) => '<ul class=\"list\">' + items.map(i => '<li>' + esc(i) + '</li>').join(\"\") + '</ul>';\n\nconst facts = [\n  location ? ['Location', location] : null,\n  Number(job.minExperienceYears) > 0 ? ['Experience', job.minExperienceYears + '+ years'] : null,\n  job.education ? ['Education', job.education] : null,\n].filter(Boolean).map(([k, v]) => '<div class=\"fact\"><dt>' + k + '</dt><dd>' + esc(v) + '</dd></div>').join(\"\");\n\nconst body = '<p class=\"eyebrow\">Open position</p>' +\n  '<h1>' + esc(headline) + '</h1>' +\n  (chips ? '<div class=\"chips\">' + chips + '</div>' : '') +\n  '<div class=\"layout\">' +\n    '<article class=\"card\">' +\n      (summary ? '<p class=\"summary\">' + esc(summary) + '</p>' : '') +\n      (duties.length ? '<h2>What you will do</h2>' + ul(duties) : '') +\n      (requirements.length ? '<h2>What we are looking for</h2>' + ul(requirements) : '') +\n      (nice.length ? '<h2>Nice to have</h2>' + ul(nice) : '') +\n    '</article>' +\n    '<aside class=\"side\">' +\n      '<h2>Role details</h2>' +\n      (facts ? '<dl>' + facts + '</dl>' : '') +\n      '<a class=\"btn\" href=\"' + esc(applyHref) + '\"' + (applyHref === '#' ? ' aria-disabled=\"true\"' : '') + '>Apply for this role</a>' +\n      '<p class=\"note\">You will be asked for your CV and contact details.</p>' +\n    '</aside>' +\n  '</div>';\n\nreturn [{ json: { html: shell(esc(job.role), body) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        224
+      ],
+      "id": "80a02e34-fdc3-4f67-9e21-9f9723f227dc",
+      "name": "Build Post Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        224
+      ],
+      "id": "c4b75436-c555-4d8c-9d47-99f62dc344f0",
+      "name": "Serve Post Page"
+    },
+    {
+      "parameters": {
+        "path": "skills",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        448
+      ],
+      "id": "d53817c1-2273-4a79-a164-b6ad2831acec",
+      "name": "Skills Page",
+      "webhookId": "475cdad8-729d-4bc3-b731-6bb63a6d3c0c"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        448
+      ],
+      "id": "bec6b57a-6ce2-4e1c-b8ef-1e201267c9ab",
+      "name": "Get Jobs For Skills",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1359244066,
+          "mode": "list",
+          "cachedResultName": "Skills"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        448
+      ],
+      "id": "ea1b21a8-02bd-4dae-bd14-5df8899e82c7",
+      "name": "Get Skill Rows",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const SHELL_CSS = `\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --ok:#075e4b; --ok-bg:#d4f0e6; --info:#1e40af; --violet:#5b21b6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}\n  a{color:var(--ink)}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n  .updated{font-size:14px;color:var(--steel)}\n\n  main{padding:48px 40px 80px}\n  .eyebrow{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--steel)}\n  h1{margin:0 0 10px;font-family:var(--display);font-size:44px;font-weight:700;line-height:1.05;letter-spacing:-.03em}\n  h2{margin:0;font-family:var(--display);font-size:21px;font-weight:700;letter-spacing:-.02em}\n  .lede{margin:0 0 32px;max-width:44rem;font-size:17px;color:var(--steel)}\n  .section-head{margin:40px 0 16px}\n  .section-head p{margin:4px 0 0;font-size:14px;color:var(--steel)}\n\n  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}\n  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px}\n  .kpi__label{font-size:14px;color:var(--steel)}\n  .kpi__value{margin-top:4px;font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}\n  .kpi--hl{background:var(--ink);border-color:var(--ink)}\n  .kpi--hl .kpi__label{color:#b8c3d6}\n  .kpi--hl .kpi__value{color:var(--hl)}\n\n  .split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px}\n  .pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}\n  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 26px;min-width:0}\n  .card__head{margin-bottom:18px}\n  .card__head p{margin:4px 0 0;font-size:14px;color:var(--steel)}\n  .chart{position:relative;width:100%}\n  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--steel)}\n  .legend span{display:inline-flex;align-items:center;gap:6px}\n  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}\n  .none{padding:40px 12px;text-align:center;color:var(--steel);font-size:15px}\n\n  .split-ring{display:flex;align-items:center;justify-content:center;gap:18px;flex-direction:column}\n  .ring-stat{font-family:var(--display);font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px}\n\n  table{width:100%;border-collapse:collapse;font-size:15px}\n  th{background:var(--fog);color:var(--steel);font-weight:600;text-align:left;padding:11px 14px;font-size:14px}\n  th:first-child{border-radius:8px 0 0 8px} th:last-child{border-radius:0 8px 8px 0}\n  td{padding:14px;border-bottom:1px solid var(--line);vertical-align:top}\n  tr:last-child td{border-bottom:0}\n  .role{font-family:var(--display);font-size:17px;font-weight:700}\n  .num{font-family:var(--display);font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}\n  .pill{display:inline-block;background:var(--hl-soft);color:var(--ink);border-radius:999px;padding:3px 11px;margin:3px 5px 3px 0;font-size:13px;font-weight:600}\n  .muted{color:var(--steel)}\n\n  .footnote{margin-top:32px;font-size:14px;color:var(--steel)}\n\n  @media (max-width:980px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.split,.pair{grid-template-columns:1fr}}\n  @media (max-width:560px){main{padding:28px 16px 56px}.bar__in{padding:0 16px}h1{font-size:34px}.kpi__value{font-size:30px}.card{padding:20px 18px}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}}\n`;\n\nconst shell = (title, body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>${title} - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>${SHELL_CSS}</style></head><body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n  <span class=\"updated\">Updated automatically</span>\n</div></header>\n<main>${body}</main>\n</body></html>`;\n\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst openJobs = $('Get Jobs For Skills').all().map(i => i.json)\n  .filter(j => j && j.jobId && String(j.status).trim() === \"Open\");\nconst openIds = new Set(openJobs.map(j => String(j.jobId).trim()));\n\nconst rows = $('Get Skill Rows').all().map(i => i.json)\n  .filter(r => r && r.skill && openIds.has(String(r.jobId).trim()));\n\nconst norm = (s) => String(s).trim().replace(/\\s+/g, \" \");\nconst keyOf = (s) => norm(s).toLowerCase();\n\n// Skill demand: how many distinct open jobs ask for each skill\nconst demand = new Map();\nfor (const r of rows) {\n  const k = keyOf(r.skill);\n  if (!demand.has(k)) demand.set(k, { name: norm(r.skill), required: new Set(), nice: new Set() });\n  const d = demand.get(k);\n  const isNice = String(r.type || \"\").trim().toLowerCase() === \"nice-to-have\";\n  (isNice ? d.nice : d.required).add(String(r.jobId).trim());\n}\nconst topSkills = [...demand.values()]\n  .map(d => ({ name: d.name, required: d.required.size, nice: d.nice.size }))\n  .sort((a, b) => (b.required + b.nice) - (a.required + a.nice))\n  .slice(0, 12);\n\nconst requiredTotal = rows.filter(r => String(r.type || \"\").trim().toLowerCase() !== \"nice-to-have\").length;\nconst niceTotal = rows.length - requiredTotal;\n\n// Per role: open jobs, average experience and most requested skills\nconst roles = new Map();\nfor (const j of openJobs) {\n  const role = norm(j.role || \"Other\");\n  if (!roles.has(role)) roles.set(role, { role, jobs: 0, years: [], skills: new Map() });\n  roles.get(role).jobs++;\n  if (Number(j.minExperienceYears) > 0) roles.get(role).years.push(Number(j.minExperienceYears));\n}\nconst roleOf = {};\nopenJobs.forEach(j => { roleOf[String(j.jobId).trim()] = norm(j.role || \"Other\"); });\nconst skillName = {};\nfor (const r of rows) {\n  const role = roleOf[String(r.jobId).trim()];\n  if (!role || !roles.has(role)) continue;\n  const m = roles.get(role).skills;\n  const k = keyOf(r.skill);\n  m.set(k, (m.get(k) || 0) + 1);\n  skillName[k] = norm(r.skill);\n}\nconst roleRows = [...roles.values()].map(r => ({\n  role: r.role,\n  jobs: r.jobs,\n  avgYears: r.years.length ? Math.round((r.years.reduce((a, b) => a + b, 0) / r.years.length) * 10) / 10 : 0,\n  topSkills: [...r.skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k]) => skillName[k])\n})).sort((a, b) => b.jobs - a.jobs);\n\n// Trend: open jobs posted per week, last 8 weeks (weeks start on Monday)\nconst weekCount = new Map();\nfor (const j of openJobs) {\n  const d = new Date(j.createdAt);\n  if (isNaN(d)) continue;\n  const day = (d.getUTCDay() + 6) % 7;\n  const mon = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day));\n  const key = mon.toISOString().slice(0, 10);\n  weekCount.set(key, (weekCount.get(key) || 0) + 1);\n}\nconst weeks = [...weekCount.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1).slice(-8)\n  .map(([week, count]) => ({ week, count }));\nconst postedRecently = weeks.reduce((sum, w) => sum + w.count, 0);\n\nconst ys = openJobs.map(j => Number(j.minExperienceYears)).filter(y => y > 0);\nconst avgAll = ys.length ? Math.round((ys.reduce((a, b) => a + b, 0) / ys.length) * 10) / 10 : 0;\n\nconst DATA = { demand: topSkills, roles: roleRows, weeks, required: requiredTotal, nice: niceTotal };\nconst dataJs = JSON.stringify(DATA).replace(/</g, \"\\\\u003c\");\n\nconst roleTable = roleRows.length\n  ? '<div style=\"overflow-x:auto\"><table style=\"min-width:620px\"><thead><tr><th>Role</th><th>Open jobs</th><th>Min. experience</th><th>Most requested skills</th></tr></thead><tbody>' +\n    roleRows.map(r => '<tr><td class=\"role\">' + esc(r.role) + '</td><td class=\"num\">' + r.jobs + '</td><td>' +\n      (r.avgYears ? esc(r.avgYears) + ' years' : '<span class=\"muted\">Not stated</span>') + '</td><td>' +\n      (r.topSkills.map(s => '<span class=\"pill\">' + esc(s) + '</span>').join(\"\") || '<span class=\"muted\">—</span>') + '</td></tr>').join(\"\") +\n    '</tbody></table></div>'\n  : '<div class=\"none\">No open positions yet.</div>';\n\nconst body =\n  '<p class=\"eyebrow\">Live view of our hiring</p>' +\n  '<h1>Skills in demand</h1>' +\n  '<p class=\"lede\">See what our open positions look for. Use it to focus your learning and to tailor your CV.</p>' +\n\n  '<div class=\"kpis\">' +\n    '<div class=\"kpi kpi--hl\"><div class=\"kpi__label\">Open positions</div><div class=\"kpi__value\">' + openJobs.length + '</div></div>' +\n    '<div class=\"kpi\"><div class=\"kpi__label\">Skills requested</div><div class=\"kpi__value\">' + demand.size + '</div></div>' +\n    '<div class=\"kpi\"><div class=\"kpi__label\">Average experience</div><div class=\"kpi__value\">' + (avgAll ? esc(avgAll) + ' yrs' : '—') + '</div></div>' +\n    '<div class=\"kpi\"><div class=\"kpi__label\">Posted in the last 8 weeks</div><div class=\"kpi__value\">' + postedRecently + '</div></div>' +\n  '</div>' +\n\n  '<div class=\"section-head\"><h2>Top skills</h2><p>How many open positions ask for each skill, split by required and nice to have.</p></div>' +\n  '<div class=\"split\">' +\n    '<section class=\"card\"><div class=\"chart\" style=\"height:' + Math.max(260, topSkills.length * 36 + 60) + 'px\"><canvas id=\"demand\"></canvas></div>' +\n      '<div class=\"legend\"><span><i style=\"background:#12213b\"></i>Required</span><span><i style=\"background:#ffd93d\"></i>Nice to have</span></div></section>' +\n    '<section class=\"card\"><div class=\"card__head\"><h2 style=\"font-size:18px\">Required or nice to have</h2><p>Share of all skill requests</p></div>' +\n      '<div class=\"chart\" style=\"height:240px\"><canvas id=\"split\"></canvas></div><div class=\"legend\" style=\"justify-content:center\"><span><i style=\"background:#12213b\"></i>Required</span><span><i style=\"background:#ffd93d\"></i>Nice to have</span></div></section>' +\n  '</div>' +\n\n  '<div class=\"section-head\"><h2>Roles and experience</h2><p>What each open role asks for, and how many years of experience it needs.</p></div>' +\n  '<div class=\"pair\">' +\n    '<section class=\"card\"><div class=\"card__head\"><h2 style=\"font-size:18px\">Minimum experience by role</h2><p>Years required, per role</p></div>' +\n      '<div class=\"chart\" style=\"height:280px\"><canvas id=\"years\"></canvas></div></section>' +\n    '<section class=\"card\"><div class=\"card__head\"><h2 style=\"font-size:18px\">New positions per week</h2><p>Open positions posted, last 8 weeks</p></div>' +\n      '<div class=\"chart\" style=\"height:280px\"><canvas id=\"trend\"></canvas></div></section>' +\n  '</div>' +\n\n  '<div class=\"section-head\"><h2>Roles at a glance</h2></div>' +\n  '<section class=\"card\" style=\"padding:14px 18px\">' + roleTable + '</section>' +\n\n  '<p class=\"footnote\">Figures come from our open positions and change as roles open and close.</p>' +\n\n  '<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js\"></script>' +\n  '<script>' +\n  'var DATA = ' + dataJs + ';' +\n  'var INK = \"#12213b\", YELLOW = \"#ffd93d\", GREEN = \"#075e4b\", BLUE = \"#1e40af\", VIOLET = \"#5b21b6\", STEEL = \"#56657e\", LINE = \"#e6ebf3\";' +\n  'Chart.defaults.font.family = \"Instrument Sans, system-ui, sans-serif\";' +\n  'Chart.defaults.color = STEEL;' +\n  'Chart.defaults.plugins.legend.display = false;' +\n  'Chart.defaults.plugins.tooltip.backgroundColor = INK;' +\n  'Chart.defaults.plugins.tooltip.padding = 10;' +\n  'Chart.defaults.plugins.tooltip.cornerRadius = 8;' +\n  'function empty(id){ var c = document.getElementById(id); c.parentNode.innerHTML = \\'<div class=\"none\">Not enough data yet.</div>\\'; }' +\n\n  'if (DATA.demand.length) {' +\n    'new Chart(document.getElementById(\"demand\"), {type: \"bar\", data: {labels: DATA.demand.map(function(d){ return d.name; }), datasets: [' +\n      '{label: \"Required\", data: DATA.demand.map(function(d){ return d.required; }), backgroundColor: INK, borderRadius: 6, borderSkipped: false, barThickness: 18},' +\n      '{label: \"Nice to have\", data: DATA.demand.map(function(d){ return d.nice; }), backgroundColor: YELLOW, borderRadius: 6, borderSkipped: false, barThickness: 18}]},' +\n      'options: {indexAxis: \"y\", responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}},' +\n        'scales: {x: {stacked: true, beginAtZero: true, ticks: {precision: 0}, grid: {color: LINE}, border: {display: false}},' +\n                 'y: {stacked: true, grid: {display: false}, border: {display: false}, ticks: {color: INK, font: {weight: \"600\"}}}}}});' +\n  '} else { empty(\"demand\"); }' +\n\n  'if (DATA.required + DATA.nice) {' +\n    'new Chart(document.getElementById(\"split\"), {type: \"doughnut\", data: {labels: [\"Required\", \"Nice to have\"], datasets: [{data: [DATA.required, DATA.nice], backgroundColor: [INK, YELLOW], borderWidth: 0}]},' +\n      'options: {responsive: true, maintainAspectRatio: false, cutout: \"68%\", plugins: {legend: {display: false}}}});' +\n  '} else { empty(\"split\"); }' +\n\n  'if (DATA.roles.length) {' +\n    'new Chart(document.getElementById(\"years\"), {type: \"bar\", data: {labels: DATA.roles.map(function(r){ return r.role; }), datasets: [' +\n      '{label: \"Years\", data: DATA.roles.map(function(r){ return r.avgYears; }), backgroundColor: GREEN, borderRadius: 8, borderSkipped: false, barThickness: 28}]},' +\n      'options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true, grid: {color: LINE}, border: {display: false}, ticks: {precision: 0}}, x: {grid: {display: false}, border: {display: false}}}}});' +\n  '} else { empty(\"years\"); }' +\n\n  'if (DATA.weeks.length) {' +\n    'new Chart(document.getElementById(\"trend\"), {type: \"line\", data: {labels: DATA.weeks.map(function(w){ return w.week; }), datasets: [' +\n      '{label: \"Positions\", data: DATA.weeks.map(function(w){ return w.count; }), borderColor: VIOLET, backgroundColor: \"rgba(91,33,182,.12)\", fill: true, tension: .35, pointRadius: 4, pointBackgroundColor: VIOLET, pointBorderWidth: 0}]},' +\n      'options: {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true, grid: {color: LINE}, border: {display: false}, ticks: {precision: 0}}, x: {grid: {display: false}, border: {display: false}}}}});' +\n  '} else { empty(\"trend\"); }' +\n  '</script>';\n\nreturn [{ json: { html: shell(\"Skills in demand\", body) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        448
+      ],
+      "id": "9e48616a-023b-478a-a66f-36b9e05c74ca",
+      "name": "Build Skills Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        448
+      ],
+      "id": "28463c68-1555-4298-b94b-e7954c1e37fe",
+      "name": "Serve Skills Page"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Jobs Page": {
+      "main": [
+        [
+          {
+            "node": "Get Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Jobs": {
+      "main": [
+        [
+          {
+            "node": "Build Jobs Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Jobs Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Jobs Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Page": {
+      "main": [
+        [
+          {
+            "node": "Get Post Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Post Job": {
+      "main": [
+        [
+          {
+            "node": "Build Post Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Post Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Post Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skills Page": {
+      "main": [
+        [
+          {
+            "node": "Get Jobs For Skills",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Jobs For Skills": {
+      "main": [
+        [
+          {
+            "node": "Get Skill Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Skill Rows": {
+      "main": [
+        [
+          {
+            "node": "Build Skills Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Skills Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Skills Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2401aa5a-c2a0-47ac-977e-a73f8ce13c0c",
+  "meta": {
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "ca98Xyq0qOSlWkBl",
+  "tags": []
+}

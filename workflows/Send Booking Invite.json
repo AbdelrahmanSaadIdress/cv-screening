@@ -1,0 +1,308 @@
+{
+  "name": "Send Booking Invite",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-booking-invite",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -4320,
+        864
+      ],
+      "id": "a8528bb3-4f88-4862-be81-e8fa5ae29268",
+      "name": "Invite Input",
+      "webhookId": "7974a01c-0199-41df-b8fd-5e4151996a11"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "applicationId",
+              "lookupValue": "={{ $('Invite Input').first().json.body.applicationId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -4032,
+        864
+      ],
+      "id": "de6d2184-c28a-4a0f-a78c-e0b7e40448f9",
+      "name": "Get Applicant",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.jobId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3792,
+        864
+      ],
+      "id": "5fd0c15f-b7d9-467f-9ba1-18febae93db0",
+      "name": "Get Job",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1322532676,
+          "mode": "list",
+          "cachedResultName": "Recruiters"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "recruiterName",
+              "lookupValue": "={{ $('Get Job').first().json.recruiterName }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3552,
+        864
+      ],
+      "id": "426b8e75-b4a6-440a-9cb6-194b10cf6e11",
+      "name": "Get Recruiter",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Get Applicant').first().json || {};\nconst SCHEDULE_BASE = \"https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/webhook/schedule\";\n\nconst clean = (raw) => {\n  const o = {};\n  for (const [k, v] of Object.entries(raw || {})) o[String(k).trim()] = v;\n  return o;\n};\nconst app = clean($('Get Applicant').first().json);\nconst job = clean($('Get Job').first().json);\nconst rec = clean($('Get Recruiter').first().json);\n\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\nconst fail = (reason) => [{ json: { send: false, reason, applicationId: input.applicationId } }];\n\nif (!app.applicationId || String(app.applicationId).trim() !== String(input.applicationId || \"\").trim()) return fail(\"Applicant not found.\");\nif (String(app.bookingInviteSentAt || \"\").trim()) return fail(\"Booking invite already sent.\");\nif (String(app.interviewDate || \"\").trim()) return fail(\"An interview is already booked.\");\nif (!job.jobId) return fail(\"Job not found.\");\nif (!rec.recruiterName) return fail(\"No recruiter is linked to this job.\");\n\nconst name = String(app.applicantName || \"\").trim();\nconst first = esc(name.split(\" \")[0] || \"there\");\nconst role = esc(app.appliedPosition || job.role || \"the position\");\n\n// A random token that only this applicant's invite contains\nconst chars = \"abcdefghjkmnpqrstuvwxyz23456789\";\nlet scheduleToken = \"\";\nfor (let i = 0; i < 24; i++) scheduleToken += chars[Math.floor(Math.random() * chars.length)];\n\nconst query = [\n  [\"applicationId\", String(app.applicationId).trim()],\n  [\"token\", scheduleToken]\n].map(([k, v]) => encodeURIComponent(k) + \"=\" + encodeURIComponent(v)).join(\"&\");\nconst bookingUrl = SCHEDULE_BASE + \"?\" + query;\n\nconst html = `<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\"></head>\n<body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#f1f5f9;margin:0;padding:30px 15px;\">\n  <div style=\"max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;\">\n    <div style=\"background-color:#075e4b;color:#ffffff;padding:26px 24px;text-align:center;\">\n      <div style=\"font-size:32px;line-height:1;\">🎉</div>\n      <h2 style=\"margin:10px 0 0 0;font-size:21px;font-weight:700;\">Great news, ${first}!</h2>\n      <p style=\"margin:6px 0 0 0;font-size:14px;opacity:0.9;\">You passed our initial screening</p>\n    </div>\n    <div style=\"padding:28px 24px;color:#1e293b;font-size:15px;line-height:1.6;\">\n      <p style=\"margin:0 0 14px 0;\">Hi ${first},</p>\n      <p style=\"margin:0 0 14px 0;\">Thank you for applying for the <strong>${role}</strong> position. Your profile stood out to us, and we would like to meet you.</p>\n      <p style=\"margin:0 0 20px 0;\">Please choose a time that suits you for a short interview:</p>\n      <div style=\"text-align:center;margin:0 0 22px 0;\">\n        <a href=\"${esc(bookingUrl)}\" style=\"background-color:#075e4b;color:#ffffff;text-decoration:none;padding:13px 26px;border-radius:8px;font-weight:700;font-size:15px;display:inline-block;\">Choose your interview time</a>\n      </div>\n      <p style=\"margin:0 0 14px 0;font-size:13px;color:#64748b;\">If the button doesn't work, copy this link into your browser:<br>${esc(bookingUrl)}</p>\n      <p style=\"margin:20px 0 0 0;\">Warm regards,<br><strong>The Hiring Team</strong></p>\n    </div>\n    <div style=\"background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:14px 24px;text-align:center;color:#94a3b8;font-size:11px;\">\n      Reference ID: ${esc(app.applicationId)}\n    </div>\n  </div>\n</body></html>`;\n\nreturn [{ json: {\n  send: true,\n  reason: \"\",\n  applicationId: String(app.applicationId).trim(),\n  scheduleToken,\n  to: String(app.applicantEmail || \"\").trim(),\n  replyTo: String(rec.recruiterEmail || \"\").trim(),\n  subject: \"Great news, \" + (name.split(\" \")[0] || \"there\") + \": choose your interview time\",\n  html\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3312,
+        864
+      ],
+      "id": "1e85f6c6-8433-44a8-b1c9-d15becf365d3",
+      "name": "Build Invite"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0f9e6eb0-51df-4e97-9693-f9d7c7cae85b",
+              "leftValue": "={{ $json.send }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3072,
+        864
+      ],
+      "id": "83ff14eb-5403-494d-a21d-d8b1715b5fc4",
+      "name": "Send invite?"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -2832,
+        800
+      ],
+      "id": "a3d58fbf-58a7-497c-8893-6aa5022876e4",
+      "name": "Send Invite Email",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "webhookId": "3765a941-3862-468e-965d-7792590e6981",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HjwDs4MAxwvbodSM",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Invite Input": {
+      "main": [
+        [
+          {
+            "node": "Get Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Applicant": {
+      "main": [
+        [
+          {
+            "node": "Get Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job": {
+      "main": [
+        [
+          {
+            "node": "Get Recruiter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recruiter": {
+      "main": [
+        [
+          {
+            "node": "Build Invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invite": {
+      "main": [
+        [
+          {
+            "node": "Send invite?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send invite?": {
+      "main": [
+        [
+          {
+            "node": "Send Invite Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Invite Email": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b7b24d18-b7c2-459e-af7f-6bfad2f30c69",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "htacq8iVfBi8skHZ",
+  "tags": []
+}

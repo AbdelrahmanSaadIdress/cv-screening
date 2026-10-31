@@ -1,0 +1,750 @@
+{
+  "name": "3. Recruiter Approval",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "job-approve",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        80
+      ],
+      "id": "3c496c75-74fc-4e35-b87e-d43c742de65d",
+      "name": "Approve Job",
+      "webhookId": "9442219a-5b94-4a9f-b495-3e1df921fd84"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.body.jobId }}"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        80
+      ],
+      "id": "d773e874-2960-476b-bf51-26d21ba1698b",
+      "name": "Get Draft For Approval",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Approve Job').first().json.body || {};\nconst row = $input.first().json || {};\nconst fail = (errors) => [{ json: { valid: false, errors } }];\n\nif (!row.jobId || row.jobId !== body.jobId || !body.token || String(row.reviewToken) !== String(body.token)) {\n  return fail(['This review link is not valid.']);\n}\nif (row.status !== 'Draft') return fail(['This job was already approved.']);\n\nconst errors = [];\n\n// Skills\nconst input = Array.isArray(body.skills) ? body.skills : [];\nif (input.length > 25) errors.push('Too many skills (maximum 25).');\nconst seen = new Set();\nconst skills = [];\nfor (const s of input.slice(0, 25)) {\n  const skill = String((s && s.skill) || '').trim().slice(0, 60);\n  const weight = Number(s && s.weight);\n  const type = s && s.type === 'Required' ? 'Required' : (s && s.type === 'Nice-to-have' ? 'Nice-to-have' : null);\n  if (!skill) { errors.push('A skill name is empty.'); continue; }\n  if (seen.has(skill.toLowerCase())) { errors.push(`\"${skill}\" is listed twice.`); continue; }\n  if (!Number.isInteger(weight) || weight < 1 || weight > 10) { errors.push(`The weight for \"${skill}\" must be a whole number from 1 to 10.`); continue; }\n  if (!type) { errors.push(`Choose a type for \"${skill}\".`); continue; }\n  seen.add(skill.toLowerCase());\n  skills.push({ skill, weight, type });\n}\nif (skills.filter(s => s.type === 'Required').length < 2) errors.push('Keep at least 2 required skills.');\n\n// Requirements\nconst years = Number(body.minExperienceYears);\nif (!Number.isFinite(years) || years < 0 || years > 30) errors.push('Minimum experience must be between 0 and 30 years.');\nconst education = String(body.education || '').trim().slice(0, 200);\n\n// Posts: re-run the leak check on whatever the recruiter edited\nconst names = skills.map(s => s.skill);\nconst escRe = (s) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\nfunction leak(text) {\n  if (/\\b(weights?|weighted|priority|prioriti[sz]ed|points?|scores?|scoring|rankings?|ranked|importance)\\b/i.test(text)) return 'weight-related word';\n  if (/\\b\\d{1,3}\\s*(\\/|out of)\\s*(5|10|100)\\b/i.test(text)) return 'rating pattern';\n  if (/\\d\\s*%/.test(text)) return 'percentage';\n  for (const n of names) {\n    if (new RegExp(escRe(n) + '\\\\s*[:\\\\-–(]?\\\\s*\\\\d{1,3}\\\\b', 'i').test(text)) return `number next to \"${n}\"`;\n  }\n  return null;\n}\nfunction checkPost(label, wanted, text, max) {\n  if (!wanted) return '';\n  const t = String(text || '').trim();\n  if (!t) { errors.push(`The ${label} post is empty.`); return ''; }\n  if (t.length > max) errors.push(`The ${label} post is too long (maximum ${max} characters).`);\n  if (!t.includes(row.applyLink)) errors.push(`The ${label} post must keep the apply link.`);\n  const why = leak(t.split(row.applyLink).join(''));\n  if (why) errors.push(`The ${label} post seems to reveal scoring details (${why}). Please remove it.`);\n  return t;\n}\nconst platforms = String(row.platforms || '');\nconst telegramPost = checkPost('Telegram', platforms.includes('Telegram'), body.telegramPost, 4000);\nconst linkedinPost = checkPost('LinkedIn', platforms.includes('LinkedIn'), body.linkedinPost, 3000);\n\nif (errors.length) return fail(errors);\n\nreturn [{\n  json: {\n    valid: true,\n    jobId: row.jobId,\n    applyLink: row.applyLink,\n    skills,\n    minExperienceYears: years,\n    education,\n    telegramPost,\n    linkedinPost,\n    approvedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        80
+      ],
+      "id": "281aa539-58db-4271-a214-96b16ae11423",
+      "name": "Validate Approval"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fbc85b10-6ca4-471c-9bd2-588d3889fe99",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        80
+      ],
+      "id": "493649a7-9a07-4af5-a1a5-13d2f7c4c677",
+      "name": "Approval valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        176
+      ],
+      "id": "8fec679a-d44d-47eb-b7d8-4bb10221794a",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn d.skills.map(s => ({ json: { jobId: d.jobId, skill: s.skill, weight: s.weight, type: s.type } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "92159d97-d95a-4daa-b8f8-511c86b7baae",
+      "name": "Split Skills"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1359244066,
+          "mode": "list",
+          "cachedResultName": "Skills",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=1359244066"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "jobId": "={{ $json.jobId }}",
+            "skill": "={{ $json.skill }}",
+            "weight": "={{ $json.weight }}",
+            "type": "={{ $json.type }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skill",
+              "displayName": "skill",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "weight",
+              "displayName": "weight",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        -16
+      ],
+      "id": "3e38f7ec-e610-457f-a825-06f22c5329cc",
+      "name": "Save Job Skills",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "jobId": "={{ $('Validate Approval').first().json.jobId }}",
+            "status": "Open",
+            "approvedAt": "={{ $('Approval valid?').item.json.approvedAt }}",
+            "minExperienceYears": "={{ $('Approval valid?').item.json.minExperienceYears }}",
+            "education": "={{ $('Validate Approval').first().json.education }}",
+            "telegramPost": "={{ $('Validate Approval').first().json.telegramPost }}",
+            "linkedinPost": "={{ $('Validate Approval').first().json.linkedinPost }}"
+          },
+          "matchingColumns": [
+            "jobId"
+          ],
+          "schema": [
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "role",
+              "displayName": "role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "createdAt",
+              "displayName": "createdAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "platforms",
+              "displayName": "platforms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "minExperienceYears",
+              "displayName": "minExperienceYears",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "education",
+              "displayName": "education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "webPost",
+              "displayName": "webPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegramPost",
+              "displayName": "telegramPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "linkedinPost",
+              "displayName": "linkedinPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "applyLink",
+              "displayName": "applyLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "rawJD",
+              "displayName": "rawJD",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "draftSkills",
+              "displayName": "draftSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "reviewToken",
+              "displayName": "reviewToken",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "approvedAt",
+              "displayName": "approvedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recruiterName",
+              "displayName": "recruiterName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        -16
+      ],
+      "id": "36e00458-70fc-4214-82fb-1f9421ce6a7b",
+      "name": "Open Job",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, jobId: $('Validate Approval').first().json.jobId, applyLink: $('Validate Approval').first().json.applyLink } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2016,
+        -16
+      ],
+      "id": "55f4eb0a-7b41-4df8-b064-b1b2a8cf1d72",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Validate Approval').item.json.telegramPost }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "453750ef-2e97-40f6-8f6b-cb327895b8e9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create Telegram Post"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f1e08b36-7423-4e0f-a60a-2c42ab39000d",
+                    "leftValue": "={{ $('Validate Approval').item.json.linkedinPost }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create Linkedin Post"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        -16
+      ],
+      "id": "37100f30-1ffa-432f-9cad-a92717943171",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "chatId": "2067811023",
+        "text": "={{ $json.telegramPost }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        -112
+      ],
+      "id": "935ecb75-010c-4f00-97fc-c68223f92a3a",
+      "name": "Send a text message",
+      "webhookId": "05aa9881-d101-4d95-89c9-500bfd1f8c8c",
+      "credentials": {
+        "telegramApi": {
+          "id": "VThrrq0fC6fJJUpN",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "postAs": "organization",
+        "organization": "123456",
+        "text": "={{ $json.linkedinPost }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        80
+      ],
+      "id": "897a7cd3-a84d-486c-8fc9-f839689f0d3b",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "gAulJNMlWW5gRW5z",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Here we change the job status and also removed the review token from the sheet to prevent the recruiter from re evaluation.",
+        "height": 112,
+        "width": 278
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        -144
+      ],
+      "id": "907fe655-4e96-4d81-ac3e-54a30ff8508a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "If the review token in the sheet is not exist, then the WF will stop.\nand this for sake of security",
+        "height": 80,
+        "width": 278
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -32
+      ],
+      "id": "5a550de4-9ca0-48a4-9537-63e2c1a75065",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Approve Job": {
+      "main": [
+        [
+          {
+            "node": "Get Draft For Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Draft For Approval": {
+      "main": [
+        [
+          {
+            "node": "Validate Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Approval": {
+      "main": [
+        [
+          {
+            "node": "Approval valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval valid?": {
+      "main": [
+        [
+          {
+            "node": "Split Skills",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Skills": {
+      "main": [
+        [
+          {
+            "node": "Save Job Skills",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Job Skills": {
+      "main": [
+        [
+          {
+            "node": "Open Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open Job": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d3db2da7-24e4-4e62-90d1-64779f920e44",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "j6Lzl1ewZLGoieC3",
+  "tags": []
+}

@@ -1,0 +1,511 @@
+{
+  "name": "Recruiter Jobs Page",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "close-job",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        288
+      ],
+      "id": "a3648d55-c20e-463c-996d-a85661320ec3",
+      "name": "Close Job",
+      "webhookId": "9f88f157-952d-4b32-8c9b-dd01b2ac126e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst jobId = String(body.jobId || \"\").trim();\nconst valid = /^JOB-\\d{8}-[A-Z2-9]{4}$/.test(jobId);\nreturn [{ json: { valid, jobId, errors: valid ? [] : [\"Invalid job.\"] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        288
+      ],
+      "id": "64178aa4-e510-4713-a4b8-972390067ea3",
+      "name": "Check Close"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6dc2a037-8308-4f1d-ab16-4fbbd750b90c",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        192,
+        288
+      ],
+      "id": "96560558-5921-4215-9a59-d0f9e920a183",
+      "name": "Close valid?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "jobId": "={{ $('Check Close').first().json.jobId }}",
+            "status": "Closed"
+          },
+          "matchingColumns": [
+            "jobId"
+          ],
+          "schema": [
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "role",
+              "displayName": "role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "createdAt",
+              "displayName": "createdAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "platforms",
+              "displayName": "platforms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "minExperienceYears",
+              "displayName": "minExperienceYears",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "education",
+              "displayName": "education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "webPost",
+              "displayName": "webPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "telegramPost",
+              "displayName": "telegramPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "linkedinPost",
+              "displayName": "linkedinPost",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applyLink",
+              "displayName": "applyLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "rawJD",
+              "displayName": "rawJD",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "draftSkills",
+              "displayName": "draftSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "reviewToken",
+              "displayName": "reviewToken",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "approvedAt",
+              "displayName": "approvedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "recruiterName",
+              "displayName": "recruiterName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        192
+      ],
+      "id": "55ad2394-67d0-402d-bd16-4d975351f687",
+      "name": "Set Closed",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, jobId: $('Check Close').first().json.jobId } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        640,
+        192
+      ],
+      "id": "6d55dfae-24cd-4558-ac56-ddcb01a8f019",
+      "name": "Respond Closed"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        416,
+        384
+      ],
+      "id": "1e2122e3-5c47-4209-971c-f8440dcb6652",
+      "name": "Respond Close Invalid"
+    },
+    {
+      "parameters": {
+        "jsCode": "const SHELL_CSS = `\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --danger:#b3261e; --danger-bg:#fdecea;\n    --ok:#075e4b; --ok-bg:#d4f0e6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;\n    -webkit-font-smoothing:antialiased}\n  button{font:inherit;color:inherit}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n\n  main{padding:48px 40px 80px}\n  h1{margin:0 0 8px;font-family:var(--display);font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-.03em}\n  h2{margin:0;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.02em}\n  .lede{max-width:48rem;margin:0 0 32px;font-size:17px;color:var(--steel)}\n\n  .panel{background:#fff;border:1px solid var(--line);border-top:4px solid var(--hl);border-radius:12px;padding:28px 32px 32px;margin-bottom:28px}\n  .panel__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:20px}\n  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}\n  .job{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;padding:20px;background:#fff;\n    transition:border-color .15s,box-shadow .15s}\n  .job:hover{border-color:#b3bdcf;box-shadow:0 6px 18px -10px rgba(18,33,59,.25)}\n  .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}\n  .job h3{margin:0 0 4px;font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.015em;line-height:1.2}\n  .meta{font-size:13px;color:var(--steel)}\n  .meta strong{color:var(--ink)}\n  .badge{flex:none;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;background:var(--fog);color:var(--steel)}\n  .badge.open{background:var(--ok-bg);color:var(--ok)}\n  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:18px}\n  .btn{height:40px;padding:0 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background-color .15s,border-color .15s}\n  .btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  .btn:disabled{opacity:.55;cursor:wait}\n  .btn-primary{background:var(--ink);color:#fff;border:0}\n  .btn-primary:hover:not(:disabled){background:var(--ink-soft)}\n  .btn-danger{background:#fff;color:var(--danger);border:1.5px solid #f0c4c0}\n  .btn-danger:hover:not(:disabled){background:var(--danger-bg);border-color:var(--danger)}\n  .empty{padding:24px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--steel);font-size:15px}\n\n  @media (max-width:860px){h1{font-size:32px}}\n  @media (max-width:560px){main{padding:32px 16px 56px}.bar__in{padding:0 16px}.panel{padding:22px 18px 24px}\n    .grid{grid-template-columns:1fr}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}}\n`;\n\nconst shell = (title, body) => `<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>${title} - Shortlist</title><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\"><style>${SHELL_CSS}</style></head><body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n</div></header>\n<main>${body}</main>\n</body></html>`;\n\nconst q = $('Recruiter Page').first().json.query || {};\nconst recruiter = String(q[\"recruiter-name\"] || \"\").slice(0, 80);\nconst norm = (s) => String(s ?? \"\").toLowerCase().trim().replace(/[^a-z0-9\\u0600-\\u06FF]+/g, \"-\").replace(/^-+|-+$/g, \"\");\nconst wanted = norm(recruiter);\n\nconst jobs = $('Get Recruiter Jobs').all().map(i => i.json)\n  .filter(j => j && j.jobId && norm(j.recruiterName) === wanted);\n\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst card = (j) => {\n  const jobId = String(j.jobId).trim();\n  const isOpen = String(j.status).trim() === \"Open\";\n  const badge = '<span class=\"badge' + (isOpen ? ' open' : '') + '\">' + (isOpen ? 'Open' : esc(j.status)) + '</span>';\n  const closeBtn = isOpen ? '<button class=\"btn btn-danger\" data-close=\"' + esc(jobId) + '\">Close job</button>' : '';\n  return '<article class=\"job\">' +\n    '<div class=\"top\"><div><h3>' + esc(j.role) + '</h3><div class=\"meta\">Job ID <strong>' + esc(jobId) + '</strong></div></div>' + badge + '</div>' +\n    '<div class=\"actions\"><button class=\"btn btn-primary\" data-view=\"' + esc(jobId) + '\">View applicants</button>' + closeBtn + '</div>' +\n    '</article>';\n};\n\nconst openJobs = jobs.filter(j => String(j.status).trim() === \"Open\");\nconst closedJobs = jobs.filter(j => String(j.status).trim() !== \"Open\");\n\nconst body = '<h1>My jobs</h1>' +\n  '<p class=\"lede\">Welcome, ' + esc(recruiter) + '. Choose a job to see its applicants.</p>' +\n  '<section class=\"panel\"><div class=\"panel__head\"><h2>Open jobs</h2></div>' +\n  (openJobs.length ? '<div class=\"grid\">' + openJobs.map(card).join(\"\") + '</div>' : '<div class=\"empty\">No open jobs.</div>') +\n  '</section>' +\n  '<section class=\"panel\"><div class=\"panel__head\"><h2>Closed jobs</h2></div>' +\n  (closedJobs.length ? '<div class=\"grid\">' + closedJobs.map(card).join(\"\") + '</div>' : '<div class=\"empty\">No closed jobs.</div>') +\n  '</section>' +\n  '<script>' +\n  'var base = location.pathname.replace(/\\\\/recruiter\\\\/?$/, \"\");' +\n  'document.addEventListener(\"click\", async function(e){' +\n  '  var v = e.target.getAttribute(\"data-view\");' +\n'  if (v) { location.href = base + \"/job?jobId=\" + encodeURIComponent(v); return; }' +\n  '  var c = e.target.getAttribute(\"data-close\");' +\n  '  if (!c) return;' +\n  '  if (!confirm(\"Close this job? New applications will be stopped.\")) return;' +\n  '  e.target.disabled = true;' +\n  '  try {' +\n  '    var r = await fetch(base + \"/close-job\", {method: \"POST\", headers: {\"Content-Type\": \"application/json\"}, body: JSON.stringify({jobId: c})});' +\n  '    var d = await r.json();' +\n  '    if (d.ok) { location.reload(); } else { alert((d.errors || [\"Could not close the job.\"]).join(\"\\\\n\")); e.target.disabled = false; }' +\n  '  } catch (err) { alert(\"Could not reach the server. Please try again.\"); e.target.disabled = false; }' +\n  '});' +\n  '</script>';\n\nreturn [{ json: { html: shell(\"My jobs\", body) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -32
+      ],
+      "id": "7fd1bafb-d485-467b-98f9-cfdfbc17e6de",
+      "name": "Build Jobs Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "e55fe0f2-6fef-45de-84f9-cb0434d223f4",
+      "name": "Serve Jobs Page"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "recruiterName",
+              "lookupValue": "={{ $json.query[\"recruiter-name\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -32,
+        -32
+      ],
+      "id": "a73c742c-a7fe-4fa7-b562-cbee181ed7f7",
+      "name": "Get Recruiter Jobs",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "recruiter",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        -32
+      ],
+      "id": "a050e85e-319f-4e11-b550-d3be674ec0f1",
+      "name": "Recruiter Page",
+      "webhookId": "4b57afbc-f3bc-40c7-a7d2-9c14e7041d5e"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Close Job": {
+      "main": [
+        [
+          {
+            "node": "Check Close",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Close": {
+      "main": [
+        [
+          {
+            "node": "Close valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Close valid?": {
+      "main": [
+        [
+          {
+            "node": "Set Closed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Close Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Closed": {
+      "main": [
+        [
+          {
+            "node": "Respond Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Jobs Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Jobs Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recruiter Jobs": {
+      "main": [
+        [
+          {
+            "node": "Build Jobs Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recruiter Page": {
+      "main": [
+        [
+          {
+            "node": "Get Recruiter Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "fc3a82ec-3e10-447a-be19-9e471e43408e",
+  "meta": {
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "3QkifwB5KDgZ9lvA",
+  "tags": []
+}

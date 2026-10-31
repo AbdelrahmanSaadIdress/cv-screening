@@ -1,0 +1,1192 @@
+{
+  "name": "Manual To Pending",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "accept-applicant",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1712,
+        320
+      ],
+      "id": "c8e6cc11-571e-42fd-a30c-e10fa99b3717",
+      "name": "Accept Request",
+      "webhookId": "a4e65f6e-5a07-47e4-b14f-45d951447e3f"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst applicationId = String(body.applicationId || \"\").trim();\n// const valid = /^APP-\\d{8}-[A-Z2-9]{5}$/.test(applicationId);\nconst valid = true\nreturn [{ json: { valid, applicationId, errors: valid ? [] : [\"Invalid application.\"] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        320
+      ],
+      "id": "3888b031-4357-4b5d-b348-8c750753770e",
+      "name": "Check Accept"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "38e269d7-0f12-4d0f-90b9-792e5f03d611",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1264,
+        320
+      ],
+      "id": "6083c0de-3ce4-443d-9eba-37412aa06829",
+      "name": "Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1040,
+        416
+      ],
+      "id": "729767b9-8171-4f63-9233-e83052084718",
+      "name": "Respond Invalid"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "applicationId",
+              "lookupValue": "={{ $('Check Accept').first().json.applicationId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1040,
+        224
+      ],
+      "id": "b3ef7d19-34c2-4634-a9ea-433319d6eab2",
+      "name": "Get Applicant",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Check Accept').first().json;\nconst raw = $input.first().json || {};\nconst row = {};\nfor (const [k, val] of Object.entries(raw)) row[String(k).trim()] = val;\n\nconst found = Boolean(row.applicationId) && String(row.applicationId).trim() === v.applicationId;\nconst status = String(row.status || \"\").trim();\nconst allowed = [\"Pending Review\", \"Interview Scheduled\", \"Accepted\"].includes(status);\nconst ok = found && allowed;\nconst reason = !found ? \"This application was not found.\"\n  : (!allowed ? 'This applicant cannot be accepted from the status \"' + status + '\".' : \"\");\n\nreturn [{ json: {\n  ok, reason,\n  applicationId: v.applicationId,\n  status,\n  name: String(row.applicantName || \"\").trim(),\n  email: String(row.applicantEmail || \"\").trim(),\n  role: String(row.appliedPosition || \"\").trim(),\n  alreadySent: Boolean(String(row.acceptedEmailSentAt || \"\").trim())\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        224
+      ],
+      "id": "ff600d0e-0a28-48ba-ad79-8baee3ce62ad",
+      "name": "Check Applicant"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8d3b4292-d970-41fa-9c18-896665085cef",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        224
+      ],
+      "id": "a83eceb1-aced-4292-b601-892a5a966e3b",
+      "name": "Can accept?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: [$json.reason] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -368,
+        320
+      ],
+      "id": "17f22e04-ba9d-4970-b5dd-828a290e6168",
+      "name": "Respond Cannot Accept"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "applicationId": "={{ $('Check Applicant').first().json.applicationId }}",
+            "status": "Accepted"
+          },
+          "matchingColumns": [
+            "applicationId"
+          ],
+          "schema": [
+            {
+              "id": "applicantName",
+              "displayName": "applicantName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicantEmail",
+              "displayName": "applicantEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicantPhone",
+              "displayName": "applicantPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "appliedPosition",
+              "displayName": "appliedPosition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicationId",
+              "displayName": "applicationId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "yearsExperienceClaimed",
+              "displayName": "yearsExperienceClaimed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cvFileId",
+              "displayName": "cvFileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cvLink",
+              "displayName": "cvLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "dupKeyEmail",
+              "displayName": "dupKeyEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "dupKeyPhone",
+              "displayName": "dupKeyPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "consentAt",
+              "displayName": "consentAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "scoreBreakdown",
+              "displayName": "scoreBreakdown",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "evidence",
+              "displayName": "evidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "interviewDate",
+              "displayName": "interviewDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "interviewScore",
+              "displayName": "interviewScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "meetingLink",
+              "displayName": "meetingLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "extractedSkills",
+              "displayName": "extractedSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "experienceYearsActual",
+              "displayName": "experienceYearsActual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "educationDetected",
+              "displayName": "educationDetected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "finalScore",
+              "displayName": "finalScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fitSummary",
+              "displayName": "fitSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -368,
+        128
+      ],
+      "id": "f458a04f-aed5-4203-b3db-063b4b113633",
+      "name": "Set Accepted",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, applicationId: $('Check Applicant').first().json.applicationId, emailQueued: !$('Check Applicant').first().json.alreadySent } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -144,
+        128
+      ],
+      "id": "1e3ae4b8-0d12-42bf-a84a-aca7c380387d",
+      "name": "Respond Accepted"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "applicant-to-pending",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1712,
+        816
+      ],
+      "id": "819a4f83-ba0b-447f-b985-21fa94204cf5",
+      "name": "Manual Request",
+      "webhookId": "77236636-2091-4213-acf8-a3fc512cc889"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $('Manual Request').item.json.body.jobId }}"
+            },
+            {
+              "lookupColumn": "applicationId",
+              "lookupValue": "={{ $json.applicationId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1040,
+        720
+      ],
+      "id": "55409046-5f35-410d-887d-8ea64a2e585c",
+      "name": "Get Job Applicants",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const picked = $input.all().map(i => i.json)\n  .filter(a => a && a.applicationId && String(a.status).trim() === \"Manual Review\")\n  .map(a => ({ json: { applicationId: String(a.applicationId).trim() } }));\nreturn picked.length ? picked : [{ json: { applicationId: \"\" } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        720
+      ],
+      "id": "cf510284-a28f-45e2-9b4c-ce8dd972a699",
+      "name": "Pick Manual Review"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c7838a5a-feb1-4482-8422-0edda83a9706",
+              "leftValue": "={{ $json.applicationId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        720
+      ],
+      "id": "7bf93d34-e6af-4c8b-bbde-f5eff823f738",
+      "name": "Any to move?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "applicationId": "={{ $json.applicationId }}",
+            "status": "Pending Review"
+          },
+          "matchingColumns": [
+            "applicationId"
+          ],
+          "schema": [
+            {
+              "id": "applicantName",
+              "displayName": "applicantName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicantEmail",
+              "displayName": "applicantEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicantPhone",
+              "displayName": "applicantPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "appliedPosition",
+              "displayName": "appliedPosition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicationId",
+              "displayName": "applicationId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "yearsExperienceClaimed",
+              "displayName": "yearsExperienceClaimed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cvFileId",
+              "displayName": "cvFileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cvLink",
+              "displayName": "cvLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "dupKeyEmail",
+              "displayName": "dupKeyEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "dupKeyPhone",
+              "displayName": "dupKeyPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "consentAt",
+              "displayName": "consentAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "scoreBreakdown",
+              "displayName": "scoreBreakdown",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "evidence",
+              "displayName": "evidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "interviewDate",
+              "displayName": "interviewDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "interviewScore",
+              "displayName": "interviewScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "meetingLink",
+              "displayName": "meetingLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "extractedSkills",
+              "displayName": "extractedSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "experienceYearsActual",
+              "displayName": "experienceYearsActual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "educationDetected",
+              "displayName": "educationDetected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "finalScore",
+              "displayName": "finalScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fitSummary",
+              "displayName": "fitSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -368,
+        640
+      ],
+      "id": "a78d347e-4dfe-44cc-82c8-2afc8e988933",
+      "name": "Set Pending Review",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, moved: $('Pick Manual Review').all().filter(i => i.json.applicationId).length } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        80,
+        720
+      ],
+      "id": "1e11ac5f-e56e-47b4-95c4-dfed6a70e0af",
+      "name": "Respond Moved",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst applicationId = String(body.applicationId || \"\").trim();\n// const valid = /^APP-\\d{8}-[A-Z2-9]{5}$/.test(applicationId);\nconst valid = true;\nreturn [{ json: { valid, applicationId, errors: valid ? [] : [\"Invalid application.\"] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        816
+      ],
+      "id": "35d3eabc-1b06-4d68-ad76-77f8a775df4e",
+      "name": "Check Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1040,
+        912
+      ],
+      "id": "f0be09d9-4710-47ac-870e-0812ae9f0b14",
+      "name": "Respond Invalid1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7a752e62-88f4-4f21-abff-5e21d9d66929",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1264,
+        816
+      ],
+      "id": "0a5b9639-4a4b-4428-ba0c-9dbcfb0e05f3",
+      "name": "Valid?1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/webhook/send-booking-invite",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ applicationId: $json.applicationId, jobId: $('Check Request').first().json.jobId }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -144,
+        640
+      ],
+      "id": "b3c8f3d8-1f67-4f39-b421-6903a6e7f682",
+      "name": "Send Booking Invite"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Accept Request": {
+      "main": [
+        [
+          {
+            "node": "Check Accept",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Accept": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Get Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Applicant": {
+      "main": [
+        [
+          {
+            "node": "Check Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Applicant": {
+      "main": [
+        [
+          {
+            "node": "Can accept?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can accept?": {
+      "main": [
+        [
+          {
+            "node": "Set Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Cannot Accept",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Accepted": {
+      "main": [
+        [
+          {
+            "node": "Respond Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Request": {
+      "main": [
+        [
+          {
+            "node": "Check Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Applicants": {
+      "main": [
+        [
+          {
+            "node": "Pick Manual Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Manual Review": {
+      "main": [
+        [
+          {
+            "node": "Any to move?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any to move?": {
+      "main": [
+        [
+          {
+            "node": "Set Pending Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Moved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Pending Review": {
+      "main": [
+        [
+          {
+            "node": "Send Booking Invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Request": {
+      "main": [
+        [
+          {
+            "node": "Valid?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?1": {
+      "main": [
+        [
+          {
+            "node": "Get Job Applicants",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Booking Invite": {
+      "main": [
+        [
+          {
+            "node": "Respond Moved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8b3ad186-18f9-4fe4-910a-91e1e04053ab",
+  "meta": {
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "2RfnLyk2ms17P2EA",
+  "tags": []
+}

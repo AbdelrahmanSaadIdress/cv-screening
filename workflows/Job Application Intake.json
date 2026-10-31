@@ -1,0 +1,1053 @@
+{
+  "name": "Job Application Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "apply",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "911340df-d1ce-446d-98a0-cfe24271a423",
+      "name": "Apply Page",
+      "webhookId": "a536ef0d-52ac-4645-86e0-80b5cf6f888a"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.query.jobId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f40aa2c4-213c-47a2-ac4d-ed232cbe9770",
+      "name": "Get Job For Page",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json || {};\nconst q = $('Apply Page').first().json.query || {};\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst shell = (body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Apply for a job - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --danger:#b3261e; --danger-bg:#fdecea;\n    --ok:#075e4b; --ok-bg:#d4f0e6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;\n    -webkit-font-smoothing:antialiased}\n  input,textarea,button{font:inherit;color:inherit}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n\n  main{padding:48px 40px 80px}\n  h1{margin:0 0 8px;font-family:var(--display);font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-.03em}\n  h2{margin:0 0 6px;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.02em}\n  .lede{max-width:48rem;margin:0 0 20px;font-size:17px;color:var(--steel)}\n  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px}\n  .chip{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--hl-soft);color:var(--ink);font-size:13px;font-weight:700}\n  .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}\n\n  .card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--hl);border-radius:12px;padding:32px 36px 36px}\n  .card[hidden]{display:none}\n  .center{text-align:center;padding:24px 0}\n  .okmark{width:44px;height:44px;margin:0 auto 16px;border-radius:50%;background:var(--ok-bg);color:var(--ok);\n    display:flex;align-items:center;justify-content:center}\n  .okmark svg{width:22px;height:22px}\n  .sub{margin:0 0 16px;color:var(--steel)}\n\n  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 22px}\n  .full{grid-column:1 / -1}\n  label.f{display:block;margin:0 0 6px;font-size:14px;font-weight:600}\n  input[type=text],input[type=email],input[type=tel],input[type=number]{width:100%;height:48px;padding:0 14px;\n    border:1.5px solid var(--line);border-radius:8px;background:#fff;transition:border-color .15s,box-shadow .15s}\n  input:hover{border-color:#b3bdcf}\n  input:focus-visible{border-color:var(--ink);outline:2px solid transparent;box-shadow:0 0 0 4px var(--hl)}\n  ::placeholder{color:#8a96ab}\n\n  .file{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:120px;padding:20px;\n    border:1.5px dashed #b3bdcf;border-radius:12px;background:#fff;text-align:center;color:var(--steel);cursor:pointer;\n    transition:border-color .15s,background-color .15s}\n  .file:hover{border-color:var(--ink);background:var(--fog)}\n  .file:focus-within{border-color:var(--ink);box-shadow:0 0 0 4px var(--hl)}\n  .file strong{font-size:15px;color:var(--ink)}\n  .file small{font-size:13px}\n  .file.has{border:1.5px solid var(--ok);background:var(--ok-bg);color:var(--ok)}\n  .file.has strong{color:var(--ok)}\n\n  .consent{display:flex;gap:12px;align-items:flex-start;margin-top:24px;padding:14px 16px;background:var(--fog);border-radius:8px;\n    font-size:14px;color:var(--steel);line-height:1.5;cursor:pointer}\n  .consent input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--ink);cursor:pointer}\n\n  .errors{margin-top:22px;padding:12px 14px;background:var(--danger-bg);border-left:3px solid var(--danger);border-radius:6px;color:#7a1a14;font-size:15px}\n  .errors[hidden]{display:none}\n  .errors ul{margin:0;padding-left:20px}\n  #go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:50px;margin-top:26px;border:0;border-radius:8px;\n    background:var(--ink);color:#fff;font-weight:600;cursor:pointer;transition:background-color .15s}\n  #go:hover:not(:disabled){background:var(--ink-soft)}\n  #go:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  #go:disabled{opacity:.6;cursor:wait}\n  .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}\n  @keyframes spin{to{transform:rotate(360deg)}}\n\n  .side{padding:28px 28px 30px;background:#fff;border:1px solid var(--line);border-radius:12px}\n  .steps{margin:16px 0 0;padding:0;list-style:none;counter-reset:s}\n  .steps li{position:relative;padding:0 0 18px 40px;counter-increment:s}\n  .steps li:last-child{padding-bottom:0}\n  .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;\n    font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}\n  .steps li:not(:last-child)::after{content:'';position:absolute;left:13px;top:32px;bottom:4px;width:2px;background:var(--line)}\n  .steps b{display:block;font-size:15px}\n  .steps span{font-size:14px;color:var(--steel)}\n  .ref{display:inline-block;margin:8px 0 18px;padding:10px 18px;background:var(--fog);border:1px solid var(--line);border-radius:8px;\n    font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:.02em}\n  .hp{position:absolute;left:-9999px;opacity:0}\n\n  @media (max-width:860px){.layout{grid-template-columns:1fr}h1{font-size:32px}}\n  @media (max-width:560px){main{padding:32px 16px 56px}.bar__in{padding:0 16px}.card{padding:24px 18px 28px}.grid{grid-template-columns:1fr}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}.spin{animation-duration:1.8s}}\n</style></head>\n<body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n</div></header>\n${body}\n</body></html>`;\n\nif (!row.jobId || row.jobId !== String(q.jobId || '').toUpperCase() || row.status !== 'Open') {\n  return [{ json: { html: shell(`<main><div class=\"card center\" style=\"max-width:640px;margin:0 auto\">\n    <h1>This position is not available</h1>\n    <p class=\"sub\">The job you are looking for is closed or the link is not valid.</p>\n  </div></main>`) } }];\n}\n\nconst chips = [\n  Number(row.minExperienceYears) > 0 ? `${esc(row.minExperienceYears)}+ years experience` : '',\n  row.education ? esc(row.education) : ''\n].filter(Boolean).map(c => `<span class=\"chip\">${c}</span>`).join('');\n\nconst jobJson = JSON.stringify(row.jobId).replace(/</g, '\\\\u003c');\n\nconst page = `\n<main>\n  <div id=\"main\">\n    <h1>Apply: ${esc(row.role)}</h1>\n    <p class=\"lede\">Fill in your details and upload your CV as a PDF (maximum 5 MB).</p>\n    <div class=\"chips\">${chips}</div>\n\n    <div class=\"layout\">\n      <section class=\"card\" id=\"form\">\n        <div class=\"grid\">\n          <div>\n            <label class=\"f\" for=\"name\">Full name</label>\n            <input type=\"text\" id=\"name\" maxlength=\"100\" autocomplete=\"name\">\n          </div>\n          <div>\n            <label class=\"f\" for=\"email\">Email address</label>\n            <input type=\"email\" id=\"email\" maxlength=\"120\" autocomplete=\"email\">\n          </div>\n          <div>\n            <label class=\"f\" for=\"phone\">Phone number</label>\n            <input type=\"tel\" id=\"phone\" maxlength=\"30\" autocomplete=\"tel\">\n          </div>\n          <div>\n            <label class=\"f\" for=\"years\">Years of experience</label>\n            <input type=\"number\" id=\"years\" min=\"0\" max=\"50\" step=\"0.5\">\n          </div>\n          <div class=\"full\">\n            <label class=\"f\" id=\"cv-label\">CV (PDF only)</label>\n            <label class=\"file\" id=\"drop\">\n              <input type=\"file\" id=\"cv\" accept=\"application/pdf,.pdf\" hidden aria-labelledby=\"cv-label\">\n              <strong id=\"fname\">Click to choose your PDF</strong>\n              <small>PDF only, up to 5 MB</small>\n            </label>\n          </div>\n        </div>\n\n        <input type=\"text\" id=\"website\" class=\"hp\" tabindex=\"-1\" autocomplete=\"off\" aria-hidden=\"true\">\n\n        <label class=\"consent\">\n          <input type=\"checkbox\" id=\"consent\">\n          <span>I agree that my data and CV are processed to evaluate my application.</span>\n        </label>\n\n        <div class=\"errors\" id=\"errors\" role=\"alert\" hidden></div>\n        <button id=\"go\">Submit application</button>\n      </section>\n\n      <aside class=\"side\">\n        <h2>What happens next</h2>\n        <ol class=\"steps\">\n          <li><b>Send your application</b><span>Your details and CV go straight to the hiring team.</span></li>\n          <li><b>Keep your reference</b><span>You get a reference ID to use if you need to contact us.</span></li>\n          <li><b>Hear back</b><span>Recruiters review applications and contact the candidates they shortlist.</span></li>\n        </ol>\n      </aside>\n    </div>\n  </div>\n</main>\n\n<script>\nvar JOB = ${jobJson};\nvar api = location.pathname.replace(/apply$/, 'apply-submit');\nvar calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;\nfunction $(id){ return document.getElementById(id); }\nfunction esc(s){ return String(s).replace(/[&<>\"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]; }); }\nfunction showErrors(list){\n  $('errors').innerHTML = '<ul>' + list.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';\n  $('errors').hidden = false;\n  $('errors').scrollIntoView({behavior: calm ? 'auto' : 'smooth', block:'center'});\n}\n$('cv').addEventListener('change', function(){\n  var f = this.files[0];\n  $('fname').textContent = f ? f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)' : 'Click to choose your PDF';\n  $('drop').className = f ? 'file has' : 'file';\n});\n$('go').addEventListener('click', async function(){\n  var btn = this;\n  $('errors').hidden = true;\n  var f = $('cv').files[0], errs = [];\n  if (!$('name').value.trim()) errs.push('Please enter your full name.');\n  if (!/^[^\\\\s@]+@[^\\\\s@]+\\\\.[^\\\\s@]{2,}$/.test($('email').value.trim())) errs.push('Please enter a valid email address.');\n  if ($('phone').value.replace(/\\\\D/g, '').length < 9) errs.push('Please enter a valid phone number.');\n  if ($('years').value === '') errs.push('Please enter your years of experience.');\n  if (!f) errs.push('Please choose your CV as a PDF file.');\n  else if (!/\\\\.pdf$/i.test(f.name)) errs.push('The CV must be a PDF file.');\n  else if (f.size > 5 * 1048576) errs.push('The CV is larger than 5 MB.');\n  if (!$('consent').checked) errs.push('You must accept the data processing consent.');\n  if (errs.length) { showErrors(errs); return; }\n\n  var fd = new FormData();\n  fd.append('jobId', JOB);\n  fd.append('name', $('name').value);\n  fd.append('email', $('email').value);\n  fd.append('phone', $('phone').value);\n  fd.append('years', $('years').value);\n  fd.append('website', $('website').value);\n  fd.append('consent', 'yes');\n  fd.append('cv', f);\n\n  btn.disabled = true;\n  btn.innerHTML = '<span class=\"spin\" aria-hidden=\"true\"></span>Submitting';\n  try {\n    var res = await fetch(api, {method: 'POST', body: fd});\n    var data = await res.json();\n    if (data.ok) {\n      $('main').innerHTML = '<div class=\"card center\" style=\"max-width:640px;margin:0 auto\">' +\n        '<div class=\"okmark\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></div>' +\n        '<h1>Application received</h1>' +\n        '<p class=\"sub\">Thank you ' + esc(data.name) + '. Your application for <strong>' + esc(data.role) + '</strong> has been received.</p>' +\n        '<div class=\"ref\">' + esc(data.applicationId) + '</div>' +\n        '<p class=\"sub\">Keep this reference in case you need to contact us.</p></div>';\n      return;\n    }\n    showErrors(data.errors || ['Something went wrong. Please try again.']);\n  } catch (e) {\n    showErrors(['Could not reach the server. Please try again.']);\n  }\n  btn.disabled = false; btn.textContent = 'Submit application';\n});\n</script>`;\n\nreturn [{ json: { html: shell(page) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8fcc39f4-5143-4aa7-8ede-ab9383ac8ff4",
+      "name": "Build Apply Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "63335e24-5237-4511-a99f-be82d5baf4da",
+      "name": "Serve Apply Page"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "apply-submit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        512
+      ],
+      "id": "400ed37e-2416-45c1-bc42-8316b03c35bf",
+      "name": "Submit Application",
+      "webhookId": "c8b85736-93cb-46b8-a86f-9c0874cd3791"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst f = item.json.body || {};\nconst bin = item.binary || {};\n\nconst clean = (v, max) => String(v ?? '').trim().slice(0, max);\n\nconst jobId = clean(f.jobId, 40).toUpperCase();\nconst name = clean(f.name, 100).replace(/\\s+/g, ' ');\nconst email = clean(f.email, 120).toLowerCase();\nconst phoneDigits = clean(f.phone, 30).replace(/\\D/g, '');\nconst years = Number(f.years);\nconst consented = ['yes', 'true', 'on', '1'].includes(clean(f.consent, 10).toLowerCase());\nconst honeypot = clean(f.website, 100);\n\nconst errors = [];\nif (honeypot) errors.push('Your submission could not be processed.');\nif (!/^JOB-\\d{8}-[A-Z2-9]{4}$/.test(jobId)) errors.push('This application link is not valid. Please use the link from the job post.');\nif (name.length < 2) errors.push('Please enter your full name.');\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email)) errors.push('Please enter a valid email address.');\nif (phoneDigits.length < 9 || phoneDigits.length > 15) errors.push('Please enter a valid phone number.');\nif (!Number.isFinite(years) || years < 0 || years > 50) errors.push('Years of experience must be between 0 and 50.');\nif (!consented) errors.push('You must accept the data processing consent.');\n\nconst key = Object.keys(bin)[0];\nif (!key) {\n  errors.push('Please upload your CV as a PDF file.');\n} else {\n  const buf = await this.helpers.getBinaryDataBuffer(0, key);\n  if (buf.slice(0, 5).toString('latin1') !== '%PDF-') errors.push('The uploaded file is not a valid PDF.');\n  if (buf.length > 5 * 1024 * 1024) errors.push(`The file is too large (${(buf.length / 1048576).toFixed(1)} MB). Maximum is 5 MB.`);\n  if (buf.length < 1000) errors.push('The uploaded file looks empty.');\n}\n\nconst phoneKey = phoneDigits.slice(-10);\nconst chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\nlet suffix = '';\nfor (let i = 0; i < 5; i++) suffix += chars[Math.floor(Math.random() * chars.length)];\nconst applicationId = `APP-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${suffix}`;\n\nconst out = {\n  json: {\n    valid: errors.length === 0,\n    errors,\n    applicationId,\n    jobId,\n    name,\n    email,\n    phone: phoneDigits,\n    yearsClaimed: Number.isFinite(years) ? years : 0,\n    dupKeyEmail: `${jobId}|${email}`,\n    dupKeyPhone: `${jobId}|${phoneKey}`,\n    consentAt: new Date().toISOString()\n  }\n};\nif (key) out.binary = { Resume: bin[key] };\nreturn [out];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        512
+      ],
+      "id": "5b377ca4-c288-4bf8-8944-2f7ba556a858",
+      "name": "Normalize & Validate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "112093f5-929b-455c-8b57-76e24559aa4f",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        512
+      ],
+      "id": "db7ca175-3ff1-458a-afa0-d7b5eed2202f",
+      "name": "Valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        608
+      ],
+      "id": "024d8c26-1d7a-464c-82fa-1dc959040803",
+      "name": "Respond: Invalid"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 223381197,
+          "mode": "list",
+          "cachedResultName": "Jobs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=223381197"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "jobId",
+              "lookupValue": "={{ $json.jobId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        416
+      ],
+      "id": "780412c8-7107-4ae6-95d8-17ac9d7805b3",
+      "name": "Get Job",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const job = $input.first().json || {};\nconst open = Boolean(job.jobId) && job.status === 'Open';\nreturn [{ json: { jobOpen: open, jobRole: job.role || '' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        416
+      ],
+      "id": "ea1e1591-6bcb-47a4-8a18-4d1874586c20",
+      "name": "Check Job Open"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ef3d67f8-e05c-43d3-881f-ed19377c74eb",
+              "leftValue": "={{ $json.jobOpen }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        416
+      ],
+      "id": "80aea71a-e22d-45ec-b176-b2da8795d595",
+      "name": "Job open?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: ['This position is no longer available.'] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1344,
+        512
+      ],
+      "id": "00293b70-ed04-46bb-9fdd-b46b2b43ce4d",
+      "name": "Respond: Closed"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Applicants",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "dupKeyEmail",
+              "lookupValue": "={{ $('Normalize & Validate').first().json.dupKeyEmail }}"
+            },
+            {
+              "lookupColumn": "dupKeyPhone",
+              "lookupValue": "={{ $('Normalize & Validate').first().json.dupKeyPhone }}"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1344,
+        320
+      ],
+      "id": "a60a608a-5834-4ca2-bb5c-3a9f27a099a8",
+      "name": "Check Duplicate",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b2fb21b8-1c93-44bf-93ef-f985c14a2a1c",
+              "leftValue": "={{ $json.applicantName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        320
+      ],
+      "id": "02ed5900-e8aa-4a2c-805f-fa57c9314ff6",
+      "name": "Already applied?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: ['We already have your application for this position. There is no need to apply again.'] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1792,
+        224
+      ],
+      "id": "34bf6766-7564-45a1-99c5-e5047d131e03",
+      "name": "Respond: Duplicate"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Normalize & Validate').all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        416
+      ],
+      "id": "6a80bfaf-ffcf-4d3c-a098-c97739a16def",
+      "name": "Restore Application"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "Resume",
+        "name": "={{ [$json.applicationId, $json.jobId, $json.phone, $json.name.replace(/[^A-Za-z0-9\\u0600-\\u06FF]+/g, '-').slice(0, 40)].join('_') }}.pdf",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Wy0X2HaXb8p4GVyDqt0wUVvaToFq1wZI",
+          "mode": "list",
+          "cachedResultName": "ATS CVs",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Wy0X2HaXb8p4GVyDqt0wUVvaToFq1wZI"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2016,
+        416
+      ],
+      "id": "4b7472ed-f946-4c4f-88bf-093c830b0354",
+      "name": "Upload CV",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "StldWHPSxxQWcvJh",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc",
+          "mode": "list",
+          "cachedResultName": "ATS Sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "applicants",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "applicantName": "={{ $('Restore Application').first().json.name }}",
+            "applicantEmail": "={{ $('Restore Application').first().json.email }}",
+            "applicantPhone": "={{ $('Restore Application').first().json.phone }}",
+            "appliedPosition": "={{ $('Check Job Open').first().json.jobRole }}",
+            "jobId": "={{ $('Restore Application').item.json.jobId }}",
+            "yearsExperienceClaimed": "={{ $('Restore Application').item.json.yearsClaimed }}",
+            "cvFileId": "={{ $json.id }}",
+            "cvLink": "=https://drive.google.com/file/d/{{ $json.id }}/view",
+            "dupKeyPhone": "={{ $('Normalize & Validate').item.json.dupKeyPhone }}",
+            "dupKeyEmail": "={{ $('Normalize & Validate').item.json.dupKeyEmail }}",
+            "consentAt": "={{ $('Normalize & Validate').item.json.consentAt }}",
+            "status": "Recieved",
+            "applicationId": "={{ $('Restore Application').first().json.applicationId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "applicantName",
+              "displayName": "applicantName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "applicantEmail",
+              "displayName": "applicantEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "applicantPhone",
+              "displayName": "applicantPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "appliedPosition",
+              "displayName": "appliedPosition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "applicationId",
+              "displayName": "applicationId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "yearsExperienceClaimed",
+              "displayName": "yearsExperienceClaimed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "cvFileId",
+              "displayName": "cvFileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "cvLink",
+              "displayName": "cvLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dupKeyEmail",
+              "displayName": "dupKeyEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dupKeyPhone",
+              "displayName": "dupKeyPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "consentAt",
+              "displayName": "consentAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scoreBreakdown",
+              "displayName": "scoreBreakdown",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "evidence",
+              "displayName": "evidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "interviewDate",
+              "displayName": "interviewDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "interviewScore",
+              "displayName": "interviewScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meetingLink",
+              "displayName": "meetingLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "extractedSkills",
+              "displayName": "extractedSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "experienceYearsActual",
+              "displayName": "experienceYearsActual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "educationDetected",
+              "displayName": "educationDetected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "finalScore",
+              "displayName": "finalScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fitSummary",
+              "displayName": "fitSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2240,
+        416
+      ],
+      "id": "87de2c0d-51fc-4a2c-a6e0-36237bbf9b4e",
+      "name": "Create Application Row",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, applicationId: $('Restore Application').first().json.applicationId, name: $('Restore Application').first().json.name, role: $('Check Job Open').first().json.jobRole } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        3136,
+        416
+      ],
+      "id": "12634914-5bfe-4a5d-a8b0-77b4cfd1c91f",
+      "name": "Respond: Success"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2688,
+        416
+      ],
+      "id": "0a254845-4007-4739-a8bf-658d508c9ba8",
+      "name": "Send a message",
+      "webhookId": "b6f01d0c-2bad-4af5-b4b9-e5515723f109",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HjwDs4MAxwvbodSM",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst a = $('Restore Application').first().json;\nconst role = $('Check Job Open').first().json.jobRole || 'the position';\n\nconst TEAM = 'The Hiring Team';\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({\n  '&': '&amp;',\n  '<': '&lt;',\n  '>': '&gt;',\n  '\"': '&quot;',\n  \"'\": '&#39;'\n}[c]));\n\nconst firstName = esc(String(a.name ?? '').trim().split(/\\s+/)[0] || 'Applicant');\n\nconst html = `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n</head>\n<body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#f1f5f9;margin:0;padding:30px 15px;\">\n  <div style=\"max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;\">\n\n    <div style=\"background-color:#2563eb;color:#ffffff;padding:28px 24px;text-align:center;\">\n      <div style=\"font-size:34px;line-height:1;\">👋</div>\n      <h2 style=\"margin:10px 0 0 0;font-size:22px;font-weight:700;\">Welcome, ${firstName}!</h2>\n      <p style=\"margin:6px 0 0 0;color:#dbeafe;font-size:14px;\">Thank you for your application</p>\n    </div>\n\n    <div style=\"padding:28px 24px;color:#1e293b;font-size:15px;line-height:1.6;\">\n      <p style=\"margin:0 0 16px 0;\">Hi ${firstName},</p>\n\n      <p style=\"margin:0 0 16px 0;\">\n        Thank you for your interest in the <strong>${esc(role)}</strong> position, and for taking the time to apply.\n        We're glad you've considered this opportunity!\n      </p>\n\n      <p style=\"margin:0 0 18px 0;\">\n        Your application has been received, and we're excited to learn more about you.\n      </p>\n\n      <div style=\"background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin-bottom:22px;\">\n        <div style=\"font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;\">What happens next</div>\n        <div style=\"margin-bottom:8px;\">📄 <strong>We review your CV</strong> and match it to the role.</div>\n        <div style=\"margin-bottom:8px;\">📧 <strong>If it's a good fit</strong>, we'll email you an invitation to book an interview.</div>\n        <div>🤝 <strong>Either way</strong>, you'll hear back from us.</div>\n      </div>\n\n      <div style=\"text-align:center;margin:0 0 20px 0;\">\n        <span style=\"display:inline-block;background-color:#eff6ff;color:#1e40af;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;\">\n          Your reference ID: ${esc(a.applicationId)}\n        </span>\n      </div>\n\n      <p style=\"margin:0 0 16px 0;\">\n        Please keep an eye on your inbox (and your spam folder, just in case). There's no need to apply again.\n      </p>\n\n      <p style=\"margin:0;\">Warm regards,<br><strong>${esc(TEAM)}</strong></p>\n    </div>\n\n    <div style=\"background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:14px 24px;text-align:center;color:#94a3b8;font-size:11px;line-height:1.5;\">\n      You received this email because you submitted an application for a position.<br>\n      We use automated tools to help screen applications, and our team makes the final decisions.\n    </div>\n\n  </div>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    to: a.email,\n    subject: `We received your application for ${String(role).replace(/[\\r\\n]+/g, ' ')}`,\n    html\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        416
+      ],
+      "id": "92662001-690e-4f7d-a235-a75722153d3f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://unappropriated-tatyana-nonpedagogically.ngrok-free.dev/webhook/score-application",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "secret",
+              "value": "={{ $('Restore Application').item.json.applicationId }}{{ $('Restore Application').item.json.jobId }}{r-4a_W&GsXx|J2U"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "application_id",
+              "value": "={{ $('Restore Application').item.json.applicationId }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{ $('Restore Application').item.json.jobId }}"
+            },
+            {
+              "name": "applicant_name",
+              "value": "={{ $('Restore Application').item.json.name }}"
+            },
+            {
+              "name": "applicant_email",
+              "value": "={{ $('Restore Application').item.json.email }}"
+            },
+            {
+              "name": "applied_position",
+              "value": "={{ $('Create Application Row').item.json.appliedPosition }}"
+            },
+            {
+              "name": "cv_link",
+              "value": "={{ $('Create Application Row').item.json.cvLink }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2912,
+        416
+      ],
+      "id": "1a48fd8c-6d65-4cdd-ae3e-ba1e9e8d1311",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Apply Page": {
+      "main": [
+        [
+          {
+            "node": "Get Job For Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job For Page": {
+      "main": [
+        [
+          {
+            "node": "Build Apply Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Apply Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Apply Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Submit Application": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Validate": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Get Job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job": {
+      "main": [
+        [
+          {
+            "node": "Check Job Open",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Job Open": {
+      "main": [
+        [
+          {
+            "node": "Job open?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job open?": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Already applied?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already applied?": {
+      "main": [
+        [
+          {
+            "node": "Respond: Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Restore Application",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Application": {
+      "main": [
+        [
+          {
+            "node": "Upload CV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload CV": {
+      "main": [
+        [
+          {
+            "node": "Create Application Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Application Row": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond: Success": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond: Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b1419b25-f118-4a79-b9d0-29df96388e68",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "sfZpQHdLtmL9mV5d",
+  "tags": []
+}

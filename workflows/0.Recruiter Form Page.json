@@ -1,0 +1,96 @@
+{
+  "name": "0.Recruiter Form Page",
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        192,
+        0
+      ],
+      "id": "1557e534-400e-4efd-a2c7-c3036ebac6da",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const DASHBOARD_URL = 'http://localhost:5173/recruiter'; // replace with your Shortlist dashboard address\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Create a new job - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --danger:#b3261e; --danger-bg:#fdecea;\n    --ok:#075e4b; --ok-bg:#d4f0e6;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;\n    -webkit-font-smoothing:antialiased}\n  input,textarea,button{font:inherit;color:inherit}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n  .back{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:6px;color:var(--steel);\n    font-size:15px;font-weight:600;text-decoration:none}\n  .back:hover{background:#f0f3f8;color:var(--ink)}\n  .back:focus-visible{outline:3px solid var(--ink);outline-offset:1px}\n  .back svg{width:16px;height:16px}\n\n  main{padding:48px 40px 80px}\n  h1{margin:0 0 8px;font-family:var(--display);font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-.03em}\n  h2{margin:0 0 6px;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.02em}\n  .lede{max-width:48rem;margin:0 0 32px;font-size:17px;color:var(--steel)}\n  .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}\n\n  .card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--hl);border-radius:12px;padding:32px 36px 36px}\n  .card[hidden]{display:none}\n  label.f{display:block;margin:0 0 6px;font-size:14px;font-weight:600}\n  .field+.field,.field+.group{margin-top:22px}\n  input[type=text],textarea{width:100%;border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:0 14px;\n    transition:border-color .15s,box-shadow .15s}\n  input[type=text]{height:48px}\n  textarea{padding:12px 14px;resize:vertical;line-height:1.55}\n  input[type=text]:hover,textarea:hover{border-color:#b3bdcf}\n  input[type=text]:focus-visible,textarea:focus-visible{border-color:var(--ink);outline:2px solid transparent;box-shadow:0 0 0 4px var(--hl)}\n  ::placeholder{color:#8a96ab}\n  .meter{height:4px;margin-top:10px;border-radius:2px;background:var(--line);overflow:hidden}\n  .meter i{display:block;height:100%;width:0;background:var(--steel);transition:width .2s,background-color .2s}\n  .meter.is-ok i{background:var(--ok)}\n  .count{margin-top:6px;font-size:13px;color:var(--steel);text-align:right}\n\n  .checks{display:flex;flex-wrap:wrap;gap:10px}\n  .chk{position:relative;display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border:1.5px solid var(--line);\n    border-radius:12px;font-weight:600;cursor:pointer;transition:border-color .15s,box-shadow .15s}\n  .chk:hover{border-color:#b3bdcf}\n  .chk input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}\n  .chk::before{content:'';width:18px;height:18px;flex:none;border:1.5px solid #b3bdcf;border-radius:5px;background:#fff}\n  .chk:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}\n  .chk:has(input:checked)::before{border-color:var(--ink);background:var(--hl)\n    url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M4.5 9.5l3 3 6-7' fill='none' stroke='%2312213b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\") center/contain no-repeat}\n  .chk:has(input:focus-visible){border-color:var(--ink);outline:2px solid transparent;box-shadow:0 0 0 4px var(--hl)}\n\n  .errors{margin-top:22px;padding:12px 14px;background:var(--danger-bg);border-left:3px solid var(--danger);border-radius:6px;color:#7a1a14;font-size:15px}\n  .errors[hidden]{display:none}\n  .errors ul{margin:0;padding-left:20px}\n  #go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:50px;margin-top:26px;border:0;border-radius:8px;\n    background:var(--ink);color:#fff;font-weight:600;cursor:pointer;transition:background-color .15s}\n  #go:hover:not(:disabled){background:var(--ink-soft)}\n  #go:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  #go:disabled{opacity:.6;cursor:wait}\n  .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}\n  @keyframes spin{to{transform:rotate(360deg)}}\n\n  .side{padding:28px 28px 30px;background:#fff;border:1px solid var(--line);border-radius:12px}\n  .steps{margin:16px 0 0;padding:0;list-style:none;counter-reset:s}\n  .steps li{position:relative;padding:0 0 18px 40px;counter-increment:s}\n  .steps li:last-child{padding-bottom:0}\n  .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;\n    font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}\n  .steps li:not(:last-child)::after{content:'';position:absolute;left:13px;top:32px;bottom:4px;width:2px;background:var(--line)}\n  .steps b{display:block;font-size:15px}\n  .steps span{font-size:14px;color:var(--steel)}\n  .tip{margin-top:22px;padding:12px 14px;background:var(--fog);border-left:3px solid var(--hl);border-radius:6px;font-size:14px}\n\n  .figures{display:flex;margin:20px 0 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}\n  .figures div{flex:1;padding:16px 0 16px 20px;border-left:1px solid var(--line)}\n  .figures div:first-child{padding-left:0;border-left:0}\n  .figures dt{font-size:14px;color:var(--steel)}\n  .figures dd{margin:2px 0 0;font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.02em}\n  .tablewrap{position:relative;overflow-x:auto}\n  table{width:100%;min-width:480px;border-collapse:collapse;font-size:14px}\n  th{padding:10px 12px;background:var(--fog);color:var(--steel);font-weight:600;text-align:left}\n  th:first-child{border-radius:8px 0 0 8px} th:last-child{border-radius:0 8px 8px 0}\n  td{padding:10px 12px;border-bottom:1px solid var(--line)}\n  .pill{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--hl-soft);color:var(--ink);font-size:12px;font-weight:700}\n  .pill.jd{background:var(--ok-bg);color:var(--ok)}\n\n  @media (max-width:860px){.layout{grid-template-columns:1fr}h1{font-size:32px}}\n  @media (max-width:560px){main{padding:32px 16px 56px}.card{padding:24px 18px 28px}.bar__in{padding:0 16px}.figures{flex-direction:column}\n    .figures div{padding:12px 0;border-left:0;border-top:1px solid var(--line)}.figures div:first-child{border-top:0}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}.spin{animation-duration:1.8s}}\n</style></head>\n<body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n  <a class=\"back\" href=\"${esc(DASHBOARD_URL)}\">\n    <svg viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10 3L5 8l5 5\"/></svg>\n    Back to dashboard\n  </a>\n</div></header>\n\n<main>\n  <h1>Create a new job</h1>\n  <p class=\"lede\">Paste the job description and choose where to publish it. Shortlist picks out the skills, and you review them before anything goes live.</p>\n\n  <div class=\"layout\">\n    <div>\n      <section class=\"card\">\n        <div class=\"field\">\n          <label class=\"f\" for=\"role\">Role</label>\n          <input type=\"text\" id=\"role\" maxlength=\"80\" placeholder=\"e.g. Frontend Engineer\">\n        </div>\n        <div class=\"field\">\n          <label class=\"f\" for=\"jd\">Job description</label>\n          <textarea id=\"jd\" rows=\"12\" placeholder=\"Paste the full job description here. If it includes skill weights, keep them.\"></textarea>\n          <div class=\"meter\" id=\"meter\"><i id=\"bar\"></i></div>\n          <div class=\"count\" id=\"count\">0 characters (minimum 100)</div>\n        </div>\n        <div class=\"group\">\n          <label class=\"f\" id=\"publish-label\">Publish to</label>\n          <div class=\"checks\" role=\"group\" aria-labelledby=\"publish-label\">\n            <label class=\"chk\"><input type=\"checkbox\" value=\"Telegram\"> Telegram</label>\n            <label class=\"chk\"><input type=\"checkbox\" value=\"LinkedIn\"> LinkedIn</label>\n          </div>\n        </div>\n        <div class=\"errors\" id=\"errors\" role=\"alert\" hidden></div>\n        <button id=\"go\">Analyze job description</button>\n      </section>\n      <section class=\"card\" id=\"result\" style=\"margin-top:24px\" hidden></section>\n    </div>\n\n    <aside class=\"side\">\n      <h2>What happens next</h2>\n      <ol class=\"steps\">\n        <li><b>Paste the description</b><span>Shortlist reads it and lists the skills it finds.</span></li>\n        <li><b>Review skills and weights</b><span>Adjust anything before it is saved.</span></li>\n        <li><b>Approve and publish</b><span>The job opens for applications and the posts go out.</span></li>\n      </ol>\n      <div class=\"tip\">Keep any skill weights written in your description. They are used as they are.</div>\n    </aside>\n  </div>\n</main>\n\n<script>\nvar api = location.pathname.replace(/job-new$/, 'job-create');\nvar recruiter = new URLSearchParams(location.search).get('recruiter') || '';\nvar LABEL = 'Analyze job description';\nvar calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;\nfunction $(id){ return document.getElementById(id); }\nfunction esc(s){ return String(s).replace(/[&<>\"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]; }); }\n\n$('jd').addEventListener('input', function(){\n  var n = $('jd').value.length;\n  $('bar').style.width = Math.min(100, n) + '%';\n  $('meter').className = 'meter' + (n >= 100 ? ' is-ok' : '');\n  $('count').textContent = n >= 100 ? n + ' characters' : n + ' characters (minimum 100)';\n});\n\nfunction showErrors(list){\n  var box = $('errors');\n  box.innerHTML = '<ul>' + list.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>';\n  box.hidden = false;\n}\n\nfunction rows(list, type){\n  return (list || []).map(function(s){\n    return '<tr><td>' + esc(s.skill) + '</td><td>' + esc(s.weight) + '</td><td>' + type + '</td><td><span class=\"pill' + (s.source === 'jd' ? ' jd' : '') + '\">' + esc(s.source) + '</span></td></tr>';\n  }).join('');\n}\n\nfunction renderResult(d){\n  var r = $('result');\n  r.innerHTML = '<h2>Extraction result</h2>' +\n    '<dl class=\"figures\">' +\n    '<div><dt>Job ID</dt><dd>' + esc(d.jobId) + '</dd></div>' +\n    '<div><dt>Weights stated in description</dt><dd>' + (d.weightsFoundInJD ? 'Yes' : 'No') + '</dd></div>' +\n    '<div><dt>Minimum experience</dt><dd>' + esc(d.minExperienceYears) + ' years</dd></div></dl>' +\n    '<div class=\"tablewrap\"><table><thead><tr><th>Skill</th><th>Weight</th><th>Type</th><th>Source</th></tr></thead><tbody>' +\n    rows(d.requiredSkills, 'Required') + rows(d.niceToHaveSkills, 'Nice-to-have') + '</tbody></table></div>';\n  r.hidden = false;\n  r.scrollIntoView({behavior: calm ? 'auto' : 'smooth'});\n}\n$('go').addEventListener('click', async function(){\n  var btn = this;\n  $('errors').hidden = true; $('result').hidden = true;\n  var platforms = [].slice.call(document.querySelectorAll('.chk input:checked')).map(function(c){ return c.value; });\n  btn.disabled = true;\n  btn.innerHTML = '<span class=\"spin\" aria-hidden=\"true\"></span>Analyzing the job description (up to 30 seconds)';\n  try {\n    var res = await fetch(api, {\n      method: 'POST',\n      headers: {'Content-Type': 'application/json'},\n      body: JSON.stringify({recruiter: recruiter, role: $('role').value, jobDescription: $('jd').value, platforms: platforms })\n    });\n    var data = await res.json();\n    if (data.ok && data.reviewUrl) {\n      window.location.href = data.reviewUrl;\n      return;\n    } else if (data.ok) {\n      renderResult(data);\n    } else {\n      showErrors(data.errors || ['Something went wrong.']);\n    }\n  } catch (e) {\n    showErrors(['Could not reach the server. Try again.']);\n  }\n  btn.disabled = false; btn.textContent = LABEL;\n});\n</script>\n</body></html>`;\n\nreturn [{ json: { html } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "502cdfd9-4e77-4a2d-bfe4-fb4eb5603125",
+      "name": "Build Form Page"
+    },
+    {
+      "parameters": {
+        "path": "job-new",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "404b5965-8c4f-490e-958b-4d9b754bce82",
+      "name": "Job Form Page",
+      "webhookId": "c613da30-ab26-4f87-8b17-47db18f4c977"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Build Form Page": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Form Page": {
+      "main": [
+        [
+          {
+            "node": "Build Form Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9502e7e8-98aa-4dc5-a953-7de3e99b08db",
+  "meta": {
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "7sDqzgETuJOg0GO3",
+  "tags": []
+}

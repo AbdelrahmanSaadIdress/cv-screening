@@ -1,0 +1,1099 @@
+{
+  "name": "Send Booking Invite",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "schedule",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1248,
+        -752
+      ],
+      "id": "6c33c65c-d48a-4a2a-9997-b7a2db669713",
+      "name": "Schedule Page",
+      "webhookId": "8edbedee-e307-46bb-85ba-b7c8410d8122"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "applicationId",
+              "lookupValue": "={{ $json.query.applicationId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1024,
+        -752
+      ],
+      "id": "4f1cd147-bd22-4b71-a46b-f46e72f97cd0",
+      "name": "Get Applicant",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $('Schedule Page').first().json.query || {};\nconst raw = $input.first().json || {};\nconst row = {};\nfor (const [k, v] of Object.entries(raw)) row[String(k).trim()] = v;\n\nconst appId = String(q.applicationId || \"\").trim();\nconst token = String(q.token || \"\").trim();\nconst status = String(row.status || \"\").trim();\nconst HOUR = 3600000, SLOT = 1800000;\n\nlet reason = \"\";\nlet booked = null;\nconst linkOk = !row.applicationId || String(row.applicationId).trim() === appId;\nif (!row.applicationId || !linkOk || !token ){\n  reason = \"This link is not valid.\";\n} else if (String(row.interviewDate || \"\").trim()) {\n  reason = \"An interview is already booked for you.\";\n  booked = { interviewDate: String(row.interviewDate).trim(), meetingLink: String(row.meetingLink || \"\").trim() };\n} else if (status !== \"Pending Review\") {\n  reason = \"Scheduling is not available for this application.\";\n}\n\n// Candidate slots: Sun to Thu, 10:00 to 15:30 start, Cairo time, 30-minute steps, next 8 days\nconst now = Date.now();\nconst fmt = new Intl.DateTimeFormat(\"en-US\", { timeZone: \"Africa/Cairo\", weekday: \"short\", hour: \"numeric\", minute: \"numeric\", hour12: false });\nconst candidates = [];\nfor (let t = Math.ceil((now + 2 * HOUR) / SLOT) * SLOT; t < now + 8 * 24 * HOUR; t += SLOT) {\n  const parts = {};\n  fmt.formatToParts(new Date(t)).forEach(p => { parts[p.type] = p.value; });\n  if (![\"Sun\", \"Mon\", \"Tue\", \"Wed\", \"Thu\"].includes(parts.weekday)) continue;\n  const mins = Number(parts.hour) * 60 + Number(parts.minute);\n  if (mins < 600 || mins > 930) continue;\n  candidates.push(new Date(t).toISOString());\n}\n\nreturn [{ json: {\n  valid: reason === \"\",\n  reason,\n  booked,\n  applicationId: appId,\n  token,\n  applicantName: String(row.applicantName || \"\").trim(),\n  role: String(row.appliedPosition || \"the position\").trim(),\n  candidates,\n  gcalBody: {\n    timeMin: new Date(now).toISOString(),\n    timeMax: new Date(now + 8 * 24 * HOUR).toISOString(),\n    timeZone: \"UTC\",\n    items: [{ id: \"primary\" }]\n  }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        -752
+      ],
+      "id": "a225a897-d025-4cac-b0b2-e953fb4a2a9c",
+      "name": "Prepare Free Busy"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "936b53e3-fc0c-4330-b871-e6f8f078f249",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -576,
+        -752
+      ],
+      "id": "f15371ce-620f-4957-8d5e-f0798ee5412f",
+      "name": "Valid?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/freeBusy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.gcalBody || $json.eventBody) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -352,
+        -832
+      ],
+      "id": "6ba97516-9e25-457a-bbbc-37ebf88a5bec",
+      "name": "Get Busy Times",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gW5NKKZJmMVEG5H7",
+          "name": "Google Calendar account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Prepare Free Busy').first().json;\nconst esc = (s) => String(s ?? \"\").replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n\nconst CSS = `\n  :root{\n    --ink:#12213b; --ink-soft:#1d3258; --fog:#f3f5f9; --line:#d3dae6; --steel:#56657e;\n    --hl:#ffd93d; --hl-soft:#fff3b8; --ok:#075e4b; --ok-bg:#d4f0e6; --danger:#b3261e; --danger-bg:#fdecea;\n    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;\n    --body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;background:var(--fog);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}\n  button{font:inherit}\n  a{color:var(--ink)}\n\n  .bar{background:#fff;border-bottom:1px solid var(--line)}\n  .bar__in{display:flex;align-items:center;height:64px;padding:0 40px}\n  .brand{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.02em}\n  .brand svg{width:32px;height:32px}\n\n  main{padding:48px 40px 80px}\n  .eyebrow{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--steel)}\n  h1{margin:0 0 10px;font-family:var(--display);font-size:44px;font-weight:700;line-height:1.08;letter-spacing:-.03em}\n  .lede{margin:0 0 34px;max-width:46rem;font-size:17px;color:var(--steel)}\n  .lede strong{color:var(--ink)}\n\n  .days{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}\n  .card{background:#fff;border:1px solid var(--line);border-top:4px solid var(--hl);border-radius:14px;padding:26px 28px 28px}\n  .card h2{margin:0 0 16px;font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-.02em}\n  .slots{display:flex;flex-wrap:wrap;gap:10px}\n  .slot{min-width:110px;height:46px;padding:0 18px;border:1.5px solid var(--line);border-radius:10px;background:#fff;\n    font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;transition:border-color .15s,background-color .15s,color .15s}\n  .slot:hover:not(:disabled){border-color:var(--ink);background:var(--ink);color:#fff}\n  .slot:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  .slot:disabled{opacity:.5;cursor:wait}\n\n  .empty{padding:40px 28px;border:1px dashed #b3bdcf;border-radius:14px;text-align:center;color:var(--steel);background:#fff}\n  .empty h2{margin:0 0 6px;font-family:var(--display);font-size:22px;color:var(--ink)}\n\n  .status{max-width:640px;margin:40px auto 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:40px 36px;text-align:center}\n  .status--ok{border-top:4px solid var(--ok)}\n  .status--info{border-top:4px solid var(--hl)}\n  .okmark{width:52px;height:52px;margin:0 auto 18px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center}\n  .okmark svg{width:24px;height:24px}\n  .status h1{font-size:34px;margin-bottom:12px}\n  .status .lede{margin:0 auto 16px;font-size:16px}\n  .when{display:inline-block;margin:6px 0 22px;padding:12px 20px;background:var(--fog);border-radius:10px;font-family:var(--display);font-size:20px;font-weight:700}\n  .btn{display:inline-flex;align-items:center;justify-content:center;height:50px;padding:0 26px;border-radius:10px;background:var(--ink);color:#fff;\n    text-decoration:none;font-size:16px;font-weight:600;transition:background-color .15s}\n  .btn:hover{background:var(--ink-soft)}\n  .btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}\n  .note{margin:20px 0 0;font-size:14px;color:var(--steel)}\n\n  @media (max-width:560px){main{padding:28px 16px 56px}.bar__in{padding:0 16px}h1{font-size:34px}.card{padding:22px 20px}.days{grid-template-columns:1fr}.status{padding:30px 22px}}\n  @media (prefers-reduced-motion:reduce){*{transition:none!important}}\n`;\n\nconst shell = (title, body) => `<!DOCTYPE html>\n<html lang=\"en\"><head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>${title} - Shortlist</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap\" rel=\"stylesheet\">\n<style>${CSS}</style></head><body>\n<header class=\"bar\"><div class=\"bar__in\">\n  <span class=\"brand\">\n    <svg viewBox=\"0 0 32 32\" aria-hidden=\"true\">\n      <rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#12213B\"/>\n      <rect x=\"9\" y=\"6\" width=\"14\" height=\"20\" rx=\"2\" fill=\"#F7F8FB\"/>\n      <rect x=\"11.5\" y=\"10\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n      <rect x=\"8\" y=\"14.5\" width=\"16\" height=\"4.5\" rx=\"1\" fill=\"#FFD93D\" opacity=\".92\"/>\n      <rect x=\"11.5\" y=\"15.5\" width=\"9\" height=\"2\" rx=\"1\" fill=\"#12213B\"/>\n      <rect x=\"11.5\" y=\"21\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#9AA6BA\"/>\n    </svg>\n    Shortlist\n  </span>\n</div></header>\n<main>${body}</main>\n</body></html>`;\n\nconst check = '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg>';\n\nif (!p.valid) {\n  if (p.booked) {\n    const link = /^https:\\/\\//.test(p.booked.meetingLink) ? p.booked.meetingLink : \"\";\n    return [{ json: { html: shell(\"Interview booked\",\n      '<div class=\"status status--ok\"><div class=\"okmark\">' + check + '</div>' +\n      '<h1>Your interview is booked</h1>' +\n      '<div class=\"when\">' + esc(p.booked.interviewDate) + '</div>' +\n      (link ? '<p><a class=\"btn\" href=\"' + esc(link) + '\" target=\"_blank\" rel=\"noopener\">Join the meeting</a></p>' : '') +\n      '<p class=\"note\">A calendar invitation was sent to your email.</p></div>') } }];\n  }\n  return [{ json: { html: shell(\"Scheduling\",\n    '<div class=\"status status--info\"><h1>Choose your interview time</h1><p class=\"lede\" style=\"margin-bottom:0\">' + esc(p.reason) + '</p></div>') } }];\n}\n\nconst resp = $input.first().json || {};\nconst busy = (resp.calendars && resp.calendars.primary && resp.calendars.primary.busy) || [];\nconst ranges = busy.map(b => [Date.parse(b.start), Date.parse(b.end)]);\nconst SLOT = 1800000;\nconst free = p.candidates.filter(iso => {\n  const s = Date.parse(iso), e = s + SLOT;\n  return !ranges.some(([bs, be]) => s < be && e > bs);\n});\n\nconst dayFmt = new Intl.DateTimeFormat(\"en-GB\", { timeZone: \"Africa/Cairo\", weekday: \"long\", day: \"numeric\", month: \"long\" });\nconst timeFmt = new Intl.DateTimeFormat(\"en-GB\", { timeZone: \"Africa/Cairo\", hour: \"2-digit\", minute: \"2-digit\", hour12: true });\nconst groups = new Map();\nfor (const iso of free) {\n  const d = dayFmt.format(new Date(iso));\n  if (!groups.has(d)) groups.set(d, []);\n  groups.get(d).push(iso);\n}\nconst sections = [...groups.entries()].map(([day, isos]) =>\n  '<section class=\"card\"><h2>' + esc(day) + '</h2><div class=\"slots\">' +\n  isos.map(iso => '<button class=\"slot\" data-slot=\"' + esc(iso) + '\">' + esc(timeFmt.format(new Date(iso))) + '</button>').join(\"\") +\n  '</div></section>').join(\"\");\n\nconst cfg = JSON.stringify({ applicationId: p.applicationId, token: p.token }).replace(/</g, \"\\\\u003c\");\nconst first = esc((p.applicantName || \"\").split(\" \")[0] || \"there\");\n\nconst body = '<p class=\"eyebrow\">Interview scheduling</p>' +\n  '<h1>Choose your interview time</h1>' +\n  '<p class=\"lede\">Hi ' + first + ', pick a time for your interview for the <strong>' + esc(p.role) + '</strong> position. Times are shown in Cairo time.</p>' +\n  (sections\n    ? '<div class=\"days\">' + sections + '</div>'\n    : '<div class=\"empty\"><h2>No times available right now</h2>We will contact you by email.</div>') +\n  '<script>' +\n  'var CFG = ' + cfg + ';' +\n  'var parts = location.pathname.split(\"/\"); parts.pop(); var book = parts.join(\"/\") + \"/schedule-book\";' +\n  'document.addEventListener(\"click\", async function(e){' +\n  '  var slot = e.target.getAttribute(\"data-slot\");' +\n  '  if (!slot) return;' +\n  '  if (!confirm(\"Book this time?\")) return;' +\n  '  var btns = document.querySelectorAll(\"button.slot\");' +\n  '  btns.forEach(function(b){ b.disabled = true; });' +\n  '  try {' +\n  '    var r = await fetch(book, {method: \"POST\", headers: {\"Content-Type\": \"application/json\"}, body: JSON.stringify({applicationId: CFG.applicationId, token: CFG.token, slot: slot})});' +\n  '    var text = await r.text(); var d;' +\n  '    try { d = JSON.parse(text); } catch (err) { d = {ok: false, errors: [\"Server error (\" + r.status + \").\"]}; }' +\n  '    if (d.ok) { location.reload(); }' +\n  '    else { alert((d.errors || [\"Could not book this time.\"]).join(\"\\\\n\")); location.reload(); }' +\n  '  } catch (err) { alert(\"Could not reach the server. Please try again.\"); btns.forEach(function(b){ b.disabled = false; }); }' +\n  '});' +\n  '</script>';\n\nreturn [{ json: { html: shell(\"Choose your interview time\", body) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        -752
+      ],
+      "id": "5b95334f-5dce-4df3-8b9a-2e04330a98c6",
+      "name": "Build Schedule Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        96,
+        -752
+      ],
+      "id": "bedcce4b-7f83-45c6-b013-a4b0f5f85495",
+      "name": "Serve Schedule Page"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schedule-book",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1248,
+        -144
+      ],
+      "id": "bfd20c42-a18f-4405-b4ba-485e0a7cf019",
+      "name": "Booking Request",
+      "webhookId": "4e9bf6e7-f4de-4875-b4a9-02e95200cb6c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst applicationId = String(body.applicationId || \"\").trim();\nconst token = String(body.token || \"\").trim();\nconst slot = String(body.slot || \"\").trim();\nconst t = Date.parse(slot);\nconst now = Date.now();\nconst errors = [];\nif (!/^APP-\\d{8}-[A-Z2-9]{5}$/.test(applicationId)) errors.push(\"Invalid application.\");\nif (!token) errors.push(\"This link is not valid.\");\nif (isNaN(t)) errors.push(\"Invalid time.\");\nelse {\n  if (t < now + 3600000) errors.push(\"That time is too soon. Please choose another.\");\n  if (t > now + 8 * 86400000) errors.push(\"That time is outside the booking window.\");\n  if (t % 1800000 !== 0) errors.push(\"Invalid time slot.\");\n}\nreturn [{ json: { valid: errors.length === 0, errors, applicationId, token, slot, slotMs: t } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        -144
+      ],
+      "id": "94c6bfac-6c65-45c9-8860-f1c772edbc71",
+      "name": "Check Booking"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "54cd242d-2686-4751-959a-f16f4559f089",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -800,
+        -144
+      ],
+      "id": "dfb4d8f5-ac54-4efa-b2fc-92068a323b1c",
+      "name": "Booking valid?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: $json.errors } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -576,
+        -48
+      ],
+      "id": "0274dbf9-1f36-478e-b5b4-b2a324f5e5aa",
+      "name": "Respond Invalid"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $('Check Booking').first().json;\nconst raw = $input.first().json || {};\nconst row = {};\nfor (const [k, v] of Object.entries(raw)) row[String(k).trim()] = v;\n\nconst found = Boolean(row.applicationId) && String(row.applicationId).trim() === b.applicationId;\nconst tokenOk = found && b.token !== \"\";\nconst booked = String(row.interviewDate || \"\").trim() !== \"\";\nconst status = String(row.status || \"\").trim();\n\nlet reason = \"\";\nif (!found || !tokenOk) reason = \"This link is not valid.\";\nelse if (booked) reason = \"An interview is already booked for you.\";\nelse if (status !== \"Pending Review\") reason = \"Scheduling is not available for this application.\";\n\nreturn [{ json: {\n  ok: reason === \"\",\n  reason,\n  applicationId: b.applicationId,\n  slotMs: b.slotMs,\n  slot: b.slot,\n  name: String(row.applicantName || \"\").trim(),\n  email: String(row.applicantEmail || \"\").trim(),\n  role: String(row.appliedPosition || \"\").trim(),\n  gcalBody: {\n    timeMin: new Date(b.slotMs).toISOString(),\n    timeMax: new Date(b.slotMs + 1800000).toISOString(),\n    timeZone: \"UTC\",\n    items: [{ id: \"primary\" }]\n  }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        -240
+      ],
+      "id": "919d249e-a7cf-4df5-afd1-480c95fa8b3c",
+      "name": "Check Applicant"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "443aa3a2-471b-4fa7-9e58-162a8911c24a",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -128,
+        -240
+      ],
+      "id": "b0fede5c-eee2-4a98-a8aa-9b31ddf9d6ac",
+      "name": "Can book?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: [$json.reason] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        96,
+        -144
+      ],
+      "id": "64d4f648-bf8f-4dc0-babb-aa176908c7e6",
+      "name": "Respond Cannot Book"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/freeBusy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.gcalBody || $json.eventBody) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        96,
+        -336
+      ],
+      "id": "aa85c3ab-d245-47e1-a029-6e5344cee660",
+      "name": "Recheck Busy",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gW5NKKZJmMVEG5H7",
+          "name": "Google Calendar account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $('Check Applicant').first().json;\nconst resp = $input.first().json || {};\nconst busy = (resp.calendars && resp.calendars.primary && resp.calendars.primary.busy) || [];\nconst s = a.slotMs, e = s + 1800000;\nconst taken = busy.some(b => s < Date.parse(b.end) && e > Date.parse(b.start));\n\nconst label = new Intl.DateTimeFormat(\"en-GB\", { timeZone: \"Africa/Cairo\", weekday: \"short\", day: \"numeric\", month: \"short\", year: \"numeric\", hour: \"2-digit\", minute: \"2-digit\", hour12: true }).format(new Date(s));\n\nreturn [{ json: {\n  free: !taken,\n  reason: taken ? \"This time was just taken. Please choose another.\" : \"\",\n  applicationId: a.applicationId,\n  slotLabel: label,\n  eventBody: {\n    summary: \"Interview: \" + (a.role || \"Application\") + \" - \" + (a.name || \"Candidate\"),\n    description: \"Application reference: \" + a.applicationId,\n    start: { dateTime: new Date(s).toISOString(), timeZone: \"Africa/Cairo\" },\n    end: { dateTime: new Date(e).toISOString(), timeZone: \"Africa/Cairo\" },\n    attendees: a.email ? [{ email: a.email }] : [],\n    conferenceData: { createRequest: { requestId: a.applicationId + \"-\" + s, conferenceSolutionKey: { type: \"hangoutsMeet\" } } }\n  }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        -336
+      ],
+      "id": "2fc1a6bf-eb9d-4cdc-959b-4b5369b97d1d",
+      "name": "Check Still Free"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c36a21cd-2c3c-473a-b80b-0c1e3c70e72b",
+              "leftValue": "={{ $json.free }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        544,
+        -336
+      ],
+      "id": "3454cf3f-617e-453e-8683-678f7d9a50a6",
+      "name": "Still free?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: [$json.reason] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        768,
+        -240
+      ],
+      "id": "a14c4c64-c15c-4bc0-8dca-eeeb1f1f40f3",
+      "name": "Respond Taken"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.gcalBody || $json.eventBody) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        -432
+      ],
+      "id": "7fd72db7-582e-4502-b67c-54dde7d35392",
+      "name": "Create Meet Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gW5NKKZJmMVEG5H7",
+          "name": "Google Calendar account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0b7d1573-b110-4066-942d-67b962b1f31b",
+              "leftValue": "={{ $json.hangoutLink }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        992,
+        -432
+      ],
+      "id": "33ac33ec-cda2-4984-b1ee-e9c9fa86e40b",
+      "name": "Has Meet link?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, errors: ['Could not create the meeting. Please try again.'] } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1216,
+        -336
+      ],
+      "id": "e0aa4506-68e5-47ff-a556-ca2f701b76c3",
+      "name": "Respond Meet Failed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ev = $input.first().json || {};\nconst sf = $('Check Still Free').first().json;\nreturn [{ json: { applicationId: sf.applicationId, interviewDate: sf.slotLabel, meetingLink: ev.hangoutLink } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -528
+      ],
+      "id": "96d8bbc6-25fe-4c96-96a6-0fc2e378819c",
+      "name": "Prepare Row"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "applicationId": "={{ $json.applicationId }}",
+            "interviewDate": "={{ $json.interviewDate }}",
+            "meetingLink": "={{ $json.meetingLink }}"
+          },
+          "matchingColumns": [
+            "applicationId"
+          ],
+          "schema": [
+            {
+              "id": "applicantName",
+              "displayName": "applicantName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicantEmail",
+              "displayName": "applicantEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicantPhone",
+              "displayName": "applicantPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "appliedPosition",
+              "displayName": "appliedPosition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "applicationId",
+              "displayName": "applicationId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobId",
+              "displayName": "jobId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "yearsExperienceClaimed",
+              "displayName": "yearsExperienceClaimed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cvFileId",
+              "displayName": "cvFileId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cvLink",
+              "displayName": "cvLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "dupKeyEmail",
+              "displayName": "dupKeyEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "dupKeyPhone",
+              "displayName": "dupKeyPhone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "consentAt",
+              "displayName": "consentAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "scoreBreakdown",
+              "displayName": "scoreBreakdown",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "evidence",
+              "displayName": "evidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "interviewDate",
+              "displayName": "interviewDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interviewScore",
+              "displayName": "interviewScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "meetingLink",
+              "displayName": "meetingLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "extractedSkills",
+              "displayName": "extractedSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "experienceYearsActual",
+              "displayName": "experienceYearsActual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "educationDetected",
+              "displayName": "educationDetected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "finalScore",
+              "displayName": "finalScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fitSummary",
+              "displayName": "fitSummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1440,
+        -528
+      ],
+      "id": "d9a638ac-44c3-4f27-969d-a3ba49549ecf",
+      "name": "Save Interview",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, interviewDate: $('Prepare Row').first().json.interviewDate, meetingLink: $('Prepare Row').first().json.meetingLink } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1664,
+        -528
+      ],
+      "id": "02722c78-d955-42ab-92cf-ede861554337",
+      "name": "Respond Booked"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1sKHLoP4eMqx1FwM-G_vgkFGPFBPw8F2HSB4hZgl9wRc/edit",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 0,
+          "mode": "list",
+          "cachedResultName": "Applicants"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "applicationId",
+              "lookupValue": "={{ $('Check Booking').first().json.applicationId }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -576,
+        -240
+      ],
+      "id": "1d849dda-6363-4ffa-b001-ebb13e05b623",
+      "name": "Get Applicant1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FjLCbYG5C8DRPzXZ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Page": {
+      "main": [
+        [
+          {
+            "node": "Get Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Applicant": {
+      "main": [
+        [
+          {
+            "node": "Prepare Free Busy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Free Busy": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Get Busy Times",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Schedule Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Busy Times": {
+      "main": [
+        [
+          {
+            "node": "Build Schedule Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Schedule Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Schedule Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Request": {
+      "main": [
+        [
+          {
+            "node": "Check Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Booking": {
+      "main": [
+        [
+          {
+            "node": "Booking valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking valid?": {
+      "main": [
+        [
+          {
+            "node": "Get Applicant1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Applicant": {
+      "main": [
+        [
+          {
+            "node": "Can book?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can book?": {
+      "main": [
+        [
+          {
+            "node": "Recheck Busy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Cannot Book",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recheck Busy": {
+      "main": [
+        [
+          {
+            "node": "Check Still Free",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Still Free": {
+      "main": [
+        [
+          {
+            "node": "Still free?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still free?": {
+      "main": [
+        [
+          {
+            "node": "Create Meet Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Taken",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Meet Event": {
+      "main": [
+        [
+          {
+            "node": "Has Meet link?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Meet link?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Meet Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Row": {
+      "main": [
+        [
+          {
+            "node": "Save Interview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Interview": {
+      "main": [
+        [
+          {
+            "node": "Respond Booked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Applicant1": {
+      "main": [
+        [
+          {
+            "node": "Check Applicant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0c5c69cc-9935-4e06-ab33-81520f0a3035",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4130a102cc14c56c59af2bb62d8dfa1c8edb747a3343cd2d7ad02b5d2cb8654f"
+  },
+  "nodeGroups": [],
+  "id": "z1wgxwb2vf6A9IXA",
+  "tags": []
+}

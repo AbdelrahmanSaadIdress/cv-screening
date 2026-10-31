@@ -1,5 +1,6 @@
 import { useAuth } from '../auth/AuthContext'
 import { useOverview, usePageTitle } from '../hooks'
+import { MY_JOBS_URL } from '../config'
 
 function Figures({ items, loading }) {
   return (
@@ -69,14 +70,14 @@ export function RecruiterHome() {
         lede={`Your hiring pipeline for ${user.company} will take shape here.`}
       />
       {error && <p className="page__error" role="alert">{error}</p>}
-      <Figures
+      {/* <Figures
         loading={loading}
         items={[
           { label: 'CVs uploaded', value: data?.stats.cvsUploaded },
           { label: 'Open roles', value: data?.stats.openRoles },
           { label: 'Shortlisted', value: data?.stats.shortlisted },
         ]}
-      />
+      /> */}
       <EmptyState
         title="Create your first job"
         text="Paste a job description and Shortlist picks out the skills and weights candidates will be ranked on. You review everything before it goes live."
@@ -84,37 +85,57 @@ export function RecruiterHome() {
         href={jobHref}
         note={jobHref ? 'Opens the job form.' : 'The job form address is not set yet.'}
       />
+
+      {MY_JOBS_URL && (
+        <section className="empty" style={{ marginTop: 20 }}>
+          <h2 className="empty__title">Your jobs</h2>
+          <p className="empty__text">See every job you have published, with its applicants and status.</p>
+          <a
+            className="btn btn--primary btn--inline"
+            href={`${MY_JOBS_URL}?recruiter-name=${encodeURIComponent(user.slug)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View my jobs
+          </a>
+        </section>
+      )}
     </div>
   )
 }
 
+
 export function ApplicantHome() {
-  usePageTitle('Overview')
   const { user } = useAuth()
-  const { data, error, loading } = useOverview('/applicant/overview')
-  const first = user.fullName.split(' ')[0]
+  const firstName = user.fullName.split(' ')[0]
 
   return (
     <div className="page">
-      <Head
-        title={`Welcome, ${first}`}
-        lede="Keep one CV on file and apply to roles with a single click."
-      />
-      {error && <p className="page__error" role="alert">{error}</p>}
-      <Figures
-        loading={loading}
-        items={[
-          { label: 'Profile complete', value: `${data?.stats.profileCompletion ?? 0}%` },
-          { label: 'Open roles', value: data?.stats.openRoles },
-          { label: 'Applications', value: data?.stats.applications },
-        ]}
-      />
-      <EmptyState
-        title="Add your CV"
-        text="Upload your CV and recruiters can match you to roles that fit your experience."
-        action="Upload your CV"
-        note="Uploads are not enabled yet."
-      />
+      <h1>Welcome, {firstName}</h1>
+      <p className="lede">
+        Shortlist connects you with our open positions. Browse the roles we are hiring for,
+        check the skills our teams value most, and apply with a CV that matches what we are looking for.
+      </p>
+
+      <div className="grid-2">
+        <section className="card">
+          <h2>Open roles</h2>
+          <p>See every position that is currently accepting applications, with its requirements and experience level.</p>
+        </section>
+        <section className="card">
+          <h2>Skills in demand</h2>
+          <p>Explore which skills appear most often across open roles and how much weight each one carries.</p>
+        </section>
+      </div>
+
+      <section className="card">
+        <h2>How it works</h2>
+        <ol>
+          <li>Choose a role that fits your background.</li>
+          <li>Review the job post and apply with your CV.</li>
+          <li>Track your review and interview status with us.</li>
+        </ol>
+      </section>
     </div>
   )
 }

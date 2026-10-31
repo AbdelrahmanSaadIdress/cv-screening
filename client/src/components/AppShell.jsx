@@ -19,11 +19,17 @@ export default function AppShell() {
         <div className="shell__inner">
           <BrandMark tone="dark" />
           <nav className="shell__nav" aria-label="Main">
-            {navFor(user).map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className="shell__link">
-                {item.label}
-              </NavLink>
-            ))}
+            {navFor(user).map((item) =>
+              item.external ? (
+                <a key={item.label} href={item.to} target="_blank" rel="noopener noreferrer" className="shell__link">
+                  {item.label}
+                </a>
+              ) : (
+                <NavLink key={item.to} to={item.to} end={item.end} className="shell__link">
+                  {item.label}
+                </NavLink>
+              )
+            )}
           </nav>
           <div className="shell__user">
             <span className={`pill pill--${user.role}`}>{ROLE_LABEL[user.role]}</span>

@@ -6,7 +6,7 @@ The system has a React frontend, a Node.js layer, and n8n as the workflow engine
 
 ### Demo video
 
-[![Watch the Shortlist demo](docs/screenshots/thumbnail.png)](https://your-video-link-here)
+[![Watch the Shortlist demo](docs/screenshots/thumbnail.png)](https://drive.google.com/file/d/1-rVlpuCPi4MIpfn3ddseWsmdXEzTTMxC/view?usp=sharing)
 
 ---
 
